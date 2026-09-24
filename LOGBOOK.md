@@ -58,3 +58,18 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   distance-only; ML training offline → serving via `model_params`/RPC dgn
   fallback chain; reminder lokal-first. `Aman.md` masih kosong → blocker
   praktis utk eksekusi migration CP-03B. Sprint 4 (CP-03B) AUTHORIZED.
+
+## 2026-09-25 — Sprint 4 / CP-03B Prototype & ML Baselines
+- Status: **PASS** — gate report: `docs/logs/CP-03-gate-report.md`
+- Bukti: schema v1 live (8 migration, 23 tabel RLS, 4 RPC discovery, 3 bucket
+  storage), seed dev sintetis (1200 interaksi deterministik), harness DB 22/22 +
+  matriks REST 53/53 + splitter test PASS, ML baseline reproducible
+  (popularity/content-based, determinism 2× run, `model_versions` draft +
+  DATASET_CARD + labeling guideline tanpa metrik karangan), prototype Flutter
+  feature-first (auth, onboarding, list, map, campus query, detail, owner add)
+  — `flutter analyze` 0 · `flutter test` 7/7 termasuk 4 contract RPC anon nyata
+- Catatan: 7 bug ditemukan & diperbaiki saat REVIEW (4 RPC+1 seed+1 export+
+  1 flutter_test HttpOverrides) — semuanya diverifikasi ulang; deviasi kontrak
+  (cover_path/lat-lng, B11→CP-04A, GPS/font/email E2E tertunda) tercatat §6.
+  Metrics baseline = data dev sintetis kecil → bukan klaim performa (R-008).
+  Sprint 5 (CP-04A) AUTHORIZED.

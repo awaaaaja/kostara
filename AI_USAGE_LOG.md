@@ -74,3 +74,26 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
   di entry CP-02 dikoreksi 48/66 → 56/72
 - Risiko/keterbatasan: desain belum dieksekusi (migration = CP-03B); kredensial
   Supabase (Aman.md) masih kosong; metrik ML belum ada (wajar, eksperimen CP-04B)
+
+### Entry — 2026-09-25 (Sprint 4 / CP-03B)
+- Tool/model: opencode / mimo-v2.6-flash-free
+- Tujuan: CP-03B — eksekusi schema+RLS+RPC (migration-first), seed dev, harness
+  DB & matriks RLS, pipeline baseline ML yang reproducible, prototype Flutter
+  slice, dan gate report CP-03 tanpa mengarang data/metric
+- Bagian yang dibantu: 8 file migration + seed; scripts run_sql/harness/RLS
+  matrix (dengan regression test splitter); export_dataset + run_baselines +
+  DATASET_CARD + LABELING_GUIDELINE; slice Flutter (router/shell, auth,
+  onboarding, list/map/detail, owner add) + unit EWKB + 4 contract test anon;
+  LOGBOOK, RISK_REGISTER, gate report CP-03
+- File/artefak terdampak: supabase/**, scripts/**, experiments/**, lib/** (baru
+  selain foundation), test/**, pubspec.yaml, .gitignore, docs/logs/CP-03-gate-report.md
+- Cara verifikasi: flutter analyze (0) · flutter test 7/7 · run_db_tests 22/22 ·
+  test_rls_matrix 53/53 · split test PASS · run_baselines determinism PASS ·
+  secret+emoji scan bersih — semua angka dieksekusi di sesi ini
+- Perubahan manual setelah output AI: deviasi kontrak RPC dicatat apa adanya di
+  gate §5–6; 4 bug RPC diperbaiki pada migration pre-release (disyaratkan
+  diverifikasi ulang oleh harness/matrix); seed interaksi ditulis ulang
+  deterministik setelah bug evaluasi LATERAL ditemukan
+- Risiko/keterbatasan: demo on-device belum jalan (env tanpa JDK/Chrome);
+  GPS JIT, font asset, email E2E ditunda ke CP-04A (R-021..R-023); dataset
+  baseline sintetis kecil — angka bukan klaim performa (R-008/R-001/R-002)
