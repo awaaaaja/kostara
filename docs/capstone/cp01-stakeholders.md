@@ -1,9 +1,8 @@
 # CP-01 — Stakeholder Map
 
-Date: 2026-09-25
-Status: kategori stakeholder terdefinisi; **individu/partisipan PENDING** (belum ada interview).
-
-Sumber: PRD §4. Belum ada bukti bahwa setiap pain di bawah benar-benar dirasakan.
+Date: 2026-09-25 (updated: evidence proxy masuk)
+Status: kategori stakeholder terdefinisi; pain terdukung **evidence sekunder/proxy**
+(E-001, E-002); partisipan primer bernama/Padang: PENDING (disarankan, R-011).
 
 ---
 

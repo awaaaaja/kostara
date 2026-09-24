@@ -1,7 +1,10 @@
 # CP-01 — Interview Plan & Script
 
 Date: 2026-09-25
-Status: instrumen siap dilaksanakan; pelaksanaan PENDING (oleh pemilik project).
+Status: instrumen siap; **evidence sekunder E-001/E-002 sudah masuk**
+(`cp01-evidence-log.md`). Sesi **primer 1:1 masih disarankan** (R-011):
+memperdalam, spesifik Padang (A-08), dan memenuhi baseline partisipan
+PRD §4.2 untuk kedalaman Capstone.
 
 Tujuan: membuktikan/menolak H-01..H-05 dan A-01..A-09 (`cp01-assumptions.md`)
 tanpa memimpin partisipan ke jawaban yang diinginkan.

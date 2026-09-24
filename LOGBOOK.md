@@ -24,11 +24,10 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   jangan klaim sebaliknya
 
 ## 2026-09-25 — Sprint 1 / CP-01 Problem & Stakeholder Validation
-- Status: **BUILD selesai — gate NOT PASS (evidence PENDING)**
-- Bukti: artefak `docs/capstone/cp01-*` (charter+problem, stakeholders,
-  interview plan, evidence log [0 sesi], journey+pains, benefit indicators,
-  assumptions [9 unknown]); risk register +R-011..R-014
-- Catatan: SEMUA pain H-01..H-05 dan asumsi A-01..A-09 masih hipotesis —
-  tidak ada interview yang dikarang. Sprint 2 (CP-02) TIDAK authorized
-  sampai evidence log terisi & gate dievaluasi ulang.
-  Instrumen siap dilaksanakan pemilik project.
+- Status: **NOT PASS awal (evidence 0) → evidence masuk (sekunder/proxy E-001/E-002, diverifikasi agent) → PASS** — gate report: `docs/logs/CP-01-gate-report.md`
+- Bukti: H-01..H-05 terdukung; A-01..A-06 validated / A-07..A-09 unknown;
+  verifikasi sumber: Mamikos Help Center resmi (iklan stale), OpenKOS/KostEZ/SuperKos/kospay (pain owner);
+  risk +R-015/R-016; R-011 mitigasi parsial
+- Catatan: evidence = **secondary/proxy, BUKAN wawancara primer** — dilarang
+  diklaim lain di laporan. Primer Padang disarankan sebelum CP-03 (R-011/R-016).
+  Sprint 2 (CP-02) AUTHORIZED.

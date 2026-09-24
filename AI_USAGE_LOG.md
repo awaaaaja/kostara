@@ -37,3 +37,12 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Cara verifikasi: evidence log = 0 entri (sengaja); semua H-xx/A-xx berstatus hipotesis/unknown; gate NOT PASS
 - Perubahan manual setelah output AI: REVIEW checklist PROMPTS §6 dijalankan; tidak ada PRD diubah (belum ada findings)
 - Risiko/keterbatasan: gate terblokir sampai wawancara nyata dijalankan pemilik project (R-011)
+
+### Entry — 2026-09-25 (CP-01 evaluasi ulang setelah evidence)
+- Tool/model: opencode / mimo-v2.6-flash-free
+- Tujuan: memproses evidence proxy/sekunder dari owner + verifikasi sumber + evaluasi ulang gate CP-01
+- Bagian yang dibantu: evidence log (E-001/E-002 dengan provenance), assumptions 6/0/3, problem statement diperkuat, journey/pains terdukung, benefit indicators directional, gate report PASS dgn limitasi, risk register update
+- File/artefak terdampak: docs/capstone/cp01-*.md, RISK_REGISTER.md, LOGBOOK.md, docs/logs/CP-01-gate-report.md
+- Cara verifikasi: 3 websearch agent (Mamikos help center resmi; OpenKOS GitHub; KostEZ/SuperKos/kospay) mengonfirmasi klaim inti; angka anekdit Reddit ditandai tak-terverifikasi; flutter analyze/test PASS
+- Perubahan manual setelah output AI: label sekunder konsisten di semua artefak; larangan klaim "hasil wawancara primer" ditulis di gate report & logbook
+- Risiko/keterbatasan: A-07/A-08/A-09 unknown; evidence primer Padang belum ada (R-011/R-016)
