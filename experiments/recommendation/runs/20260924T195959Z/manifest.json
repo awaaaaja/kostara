@@ -1,0 +1,27 @@
+{
+  "dataset_version": "2acc04df317e5b4c",
+  "git_commit": "4600cb5c0ace41612ad72d5cdca12c555c8c31fd",
+  "git_dirty": true,
+  "seed": 42,
+  "split": "temporal 70/10/20",
+  "ks": [
+    5,
+    10
+  ],
+  "interaction_weights": {
+    "impression": 0,
+    "view": 1,
+    "save": 3,
+    "compare": 2,
+    "tenancy_request": 5,
+    "tenancy_accepted": 8
+  },
+  "params": {
+    "cb_geo_weight": 0.2,
+    "cb_cos_weight": 0.8,
+    "cb_history_alpha_events": 10
+  },
+  "deterministic_rerun": true,
+  "timestamp_utc": "20260924T195959Z",
+  "data_note": "dataset dev sintetis seed \u2014 BUKAN production data"
+}

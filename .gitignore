@@ -24,3 +24,8 @@ supabase/.temp/
 coverage/
 *.log
 .DS_Store
+
+# ML experiments — raw rows & venv
+data/raw/
+.venv-ml/
+__pycache__/
