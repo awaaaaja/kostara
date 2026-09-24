@@ -1,7 +1,10 @@
 # PRD — KOSTARA
 
 **Document type:** Product Requirements Document  
-**Status:** Baseline V1 untuk Capstone  
+**Status:** **LOCKED V1** — direview & dikunci di CP-02 (2026-09-25).
+Scope rilis (V1/P1/P2) mengikuti `docs/capstone/cp02-scope-lock.md`;
+FR/AC terukur: `docs/capstone/cp02-requirements.md`; NFR: `cp02-nfr.md`.
+  
 **Primary platform:** Flutter mobile  
 **Backend:** Supabase  
 **Database:** PostgreSQL + PostGIS  
@@ -374,7 +377,9 @@ Owner dapat:
 - mencatat status paid/unpaid;
 - melihat due soon;
 - melihat overdue;
-- mengonfirmasi bukti bila flow ini dipilih tim.
+- mengonfirmasi bukti bila flow ini dipilih tim. **Catatan CP-02:** upload &
+  konfirmasi bukti = **P1**; V1 owner menandai paid/unpaid langsung
+  (`cp02-scope-lock.md`).
 
 ## 9.6 Owner analytics
 
@@ -460,8 +465,8 @@ Review hanya dapat dilakukan bila:
 
 ## 12.2 Feedback types
 
-- pulse feedback selama tenancy;
-- final review setelah tenancy selesai.
+- pulse feedback selama tenancy — **P1** (ditunda oleh CP-02 scope lock);
+- final review setelah tenancy selesai — **V1**.
 
 ## 12.3 Structured aspects
 
@@ -728,7 +733,7 @@ review_aspect_scores
 reports
 model_versions
 recommendation_logs
-notification_outbox
+notification_outbox   -- P1 (dibuat bersama fitur push, cp02-scope-lock.md)
 audit_logs
 ```
 
@@ -1244,3 +1249,30 @@ Sebuah feature hanya Done jika:
 - VALIDATION gate = PASS.
 
 **"Berfungsi di satu device" bukan Definition of Done.**
+
+---
+
+# 31. CP-02 Lock Note (2026-09-25)
+
+Requirement review CP-02 mengunci V1 tanpa mengubah isi produk di atas:
+
+- **FR/AC lengkap & terukur:** `docs/capstone/cp02-requirements.md`
+  (56 FR · 72 AC · traceability H-01..H-05 → FR → AC → test).
+- **NFR terukur:** `docs/capstone/cp02-nfr.md` (ambang performa/a11y/security
+  didefinisikan operasional, tanpa kata vague).
+- **Data & skema:** `cp02-data-dictionary.md`, `cp02-schema-draft.md`
+  (constraint: 1 tenancy aktif/kamar, composite FK review↔tenancy,
+  unique review per tenancy+type).
+- **Keamanan:** `cp02-rls-storage.md` (matrix 6 aktor × 22 tabel + storage
+  policy 4 bucket); **privacy/consent:** `cp02-privacy.md` (menutup asumsi A-07;
+  lisensi UGC review via ToS = dasar training ML-2).
+- **GIS:** `cp02-geospatial-plan.md` — V1 **distance-only** (A-09), izin
+  just-in-time, tanpa penyimpanan lokasi user.
+- **ML:** `cp02-ml-data-plan.md` (target, baseline A/B, split temporal,
+  weights hipotesis, taxonomy 8 aspek, strategi labeling, cold-start).
+- **Events:** `cp02-analytics-events.md`; **test:** `cp02-test-plan.md`;
+  **risk:** `RISK_REGISTER.md` R-001..R-020.
+
+Pergeseran rilis yang direkonsiliasi (PRD badan tidak dihapus, hanya
+diurutkan): pulse feedback → P1, upload bukti bayar → P1, server push → P1,
+travel time/isochrone → P1, `notification_outbox` → P1.

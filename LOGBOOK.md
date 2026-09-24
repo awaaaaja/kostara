@@ -31,3 +31,16 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
 - Catatan: evidence = **secondary/proxy, BUKAN wawancara primer** — dilarang
   diklaim lain di laporan. Primer Padang disarankan sebelum CP-03 (R-011/R-016).
   Sprint 2 (CP-02) AUTHORIZED.
+
+## 2026-09-25 — Sprint 2 / CP-02 Requirements, Data, Acceptance Criteria
+- Status: **PASS** — gate report: `docs/logs/CP-02-gate-report.md`
+- Bukti: 12 artefak `docs/capstone/cp02-*` (scope lock, requirements 56 FR ·
+  72 AC · traceability, NFR, data dictionary, schema draft 22 tabel + constraint,
+  RLS matrix 6 aktor + 4 storage bucket, geospatial distance-only, ML data plan
+  (baseline/split/taxonomy/labeling), events taxonomy, privacy (tutup A-07),
+  test plan, lo-fi flows); PRD status → **LOCKED V1** + §31; risk +R-017..R-020,
+  R-015 → Mitigated
+- Catatan: V1 = P0; pulse/push/bukti-bayar/travel-time/isochrone = P1
+  (`cp02-scope-lock.md`). A-09 ditutup dengan keputusan distance-only.
+  Review ML-2 bergantung ToS v1.0 lisensi UGC (R-017, task CP-04A).
+  Sprint 3 (CP-03A) AUTHORIZED.

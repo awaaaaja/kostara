@@ -46,3 +46,12 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Cara verifikasi: 3 websearch agent (Mamikos help center resmi; OpenKOS GitHub; KostEZ/SuperKos/kospay) mengonfirmasi klaim inti; angka anekdit Reddit ditandai tak-terverifikasi; flutter analyze/test PASS
 - Perubahan manual setelah output AI: label sekunder konsisten di semua artefak; larangan klaim "hasil wawancara primer" ditulis di gate report & logbook
 - Risiko/keterbatasan: A-07/A-08/A-09 unknown; evidence primer Padang belum ada (R-011/R-016)
+
+### Entry — 2026-09-25 (Sprint 2 / CP-02)
+- Tool/model: opencode / mimo-v2.6-flash-free
+- Tujuan: CP-02 requirements/data/acceptance — mengunci V1 yang terlacak dari bukti CP-01
+- Bagian yang dibantu: scope lock V1/P1/P2, 48 FR + 66 AC + traceability matrix, NFR terukur, data dictionary & schema draft (constraint), RLS matrix + storage policy, rencana geospatial (distance-only), rencana dataset/evaluasi ML-1 & ML-2 (termasuk taxonomy & strategi labeling), taxonomy event + bobot interaksi, privacy/consent (tutup A-07), test plan, lo-fi flow, lock header PRD + §31, risk update, gate report
+- File/artefak terdampak: docs/capstone/cp02-*.md (12), PRD.md, RISK_REGISTER.md, LOGBOOK.md, docs/logs/CP-02-gate-report.md
+- Cara verifikasi: audit otomatis REVIEW (traceability FR→AC→TP, kata vague di AC, kepatuhan data path ML, keterbacaan lokasi-bounded, matrix coverage) + flutter analyze/test regression + secret scan — hasil di gate report
+- Perubahan manual setelah output AI: keputusan scope (P1: pulse/push/bukti bayar/travel time) direkonsiliasi ke PRD §31; bobot interaction tetap ditandai hipotesis
+- Risiko/keterbatasan: draft schema/RLS belum dieksekusi (migration = CP-03B/04A); ToS v1.0 lisensi UGC masih task (R-017); jumlah data train/label NLP belum diketahui (R-001/R-002)
