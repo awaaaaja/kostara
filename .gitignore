@@ -17,6 +17,9 @@ build/
 .idea/
 .vscode/
 
+# Supabase CLI local temp
+supabase/.temp/
+
 # Coverage / misc
 coverage/
 *.log

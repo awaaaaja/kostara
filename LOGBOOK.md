@@ -44,3 +44,17 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   (`cp02-scope-lock.md`). A-09 ditutup dengan keputusan distance-only.
   Review ML-2 bergantung ToS v1.0 lisensi UGC (R-017, task CP-04A).
   Sprint 3 (CP-03A) AUTHORIZED.
+
+## 2026-09-25 — Sprint 3 / CP-03A Alternative Design & Architecture
+- Status: **PASS** — gate report: `docs/logs/CP-03A-gate-report.md`
+- Bukti: 8 artefak `docs/capstone/cp03a-*` (alternatives dgn kriteria, architecture
+  + data-flow + mapping 16 minggu, ERD 23 tabel (+delta `model_params`), backend
+  design (pola RLS P1–P7 + helper anti-recursion + storage/PostGIS template),
+  API/inference contract, screen flow + route guards, 10 wireframe hi-fi sesuai
+  DESIGN, backlog+DoD) + ADR-002..006; audit referensi TP/FR/AC/NFR = 0 missing;
+  flutter analyze/test PASS
+- Catatan: arsitektur kunci = feature-first + Riverpod + go_router; RLS-first +
+  SECURITY DEFINER RPC (Edge reserved, V1 nol); flutter_map + PostGIS
+  distance-only; ML training offline → serving via `model_params`/RPC dgn
+  fallback chain; reminder lokal-first. `Aman.md` masih kosong → blocker
+  praktis utk eksekusi migration CP-03B. Sprint 4 (CP-03B) AUTHORIZED.

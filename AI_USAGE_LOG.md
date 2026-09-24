@@ -50,8 +50,27 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 ### Entry — 2026-09-25 (Sprint 2 / CP-02)
 - Tool/model: opencode / mimo-v2.6-flash-free
 - Tujuan: CP-02 requirements/data/acceptance — mengunci V1 yang terlacak dari bukti CP-01
-- Bagian yang dibantu: scope lock V1/P1/P2, 48 FR + 66 AC + traceability matrix, NFR terukur, data dictionary & schema draft (constraint), RLS matrix + storage policy, rencana geospatial (distance-only), rencana dataset/evaluasi ML-1 & ML-2 (termasuk taxonomy & strategi labeling), taxonomy event + bobot interaksi, privacy/consent (tutup A-07), test plan, lo-fi flow, lock header PRD + §31, risk update, gate report
+- Bagian yang dibantu: scope lock V1/P1/P2, 56 FR + 72 AC + traceability matrix, NFR terukur, data dictionary & schema draft (constraint), RLS matrix + storage policy, rencana geospatial (distance-only), rencana dataset/evaluasi ML-1 & ML-2 (termasuk taxonomy & strategi labeling), taxonomy event + bobot interaksi, privacy/consent (tutup A-07), test plan, lo-fi flow, lock header PRD + §31, risk update, gate report
 - File/artefak terdampak: docs/capstone/cp02-*.md (12), PRD.md, RISK_REGISTER.md, LOGBOOK.md, docs/logs/CP-02-gate-report.md
 - Cara verifikasi: audit otomatis REVIEW (traceability FR→AC→TP, kata vague di AC, kepatuhan data path ML, keterbacaan lokasi-bounded, matrix coverage) + flutter analyze/test regression + secret scan — hasil di gate report
 - Perubahan manual setelah output AI: keputusan scope (P1: pulse/push/bukti bayar/travel time) direkonsiliasi ke PRD §31; bobot interaction tetap ditandai hipotesis
 - Risiko/keterbatasan: draft schema/RLS belum dieksekusi (migration = CP-03B/04A); ToS v1.0 lisensi UGC masih task (R-017); jumlah data train/label NLP belum diketahui (R-001/R-002)
+
+### Entry — 2026-09-25 (Sprint 3 / CP-03A)
+- Tool/model: opencode / mimo-v2.6-flash-free
+- Tujuan: CP-03A alternative design & architecture — bandingkan alternatif, kekunci
+  keputusan, tetapkan arsitektur buildable (tanpa mengarang data/metric)
+- Bagian yang dibantu: perbandingan alternatif 7 topik dgn kriteria; diagram
+  arsitektur + module boundary + data-flow; ERD 23 tabel; desain RLS (pola + helper
+  anti-recursion) + storage + PostGIS query; kontrak API/inference/NLP; route table
+  + guards; 10 wireframe hi-fi (token DESIGN); backlog+DoD; ADR-002..006; gate report
+- File/artefak terdampak: docs/capstone/cp03a-*.md (8), docs/decisions/ADR-002..006,
+  docs/logs/CP-03A-gate-report.md, LOGBOOK.md, AI_USAGE_LOG.md, .gitignore,
+  pubspec.yaml (deskripsi)
+- Cara verifikasi: audit silang otomatis referensi TP/FR/AC/NFR (0 missing),
+  flutter analyze (No issues) + flutter test (1/1), secret scan + emoji scan bersih
+- Perubahan manual setelah output AI: delta skema `model_params` (22→23) dicatat
+  eksplisit di ERD/gate; rujukan `FR-PERF` dikoreksi ke `NFR-PERF`; count FR/AC
+  di entry CP-02 dikoreksi 48/66 → 56/72
+- Risiko/keterbatasan: desain belum dieksekusi (migration = CP-03B); kredensial
+  Supabase (Aman.md) masih kosong; metrik ML belum ada (wajar, eksperimen CP-04B)
