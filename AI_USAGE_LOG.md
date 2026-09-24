@@ -25,6 +25,6 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Tujuan: Context acquisition + Sprint 0 / CP-00 project foundation
 - Bagian yang dibantu: repo bootstrap, docs scaffolding, guarded Supabase config, test/CI baseline
 - File/artefak terdampak: .gitignore, pubspec.yaml, lib/, test/, docs/, supabase/, README.md, .github/workflows/
-- Cara verifikasi: flutter analyze + flutter test + secret scan (git ls-files) — lihat CP-00 GATE REPORT
-- Perubahan manual setelah output AI: ditinjau pada REVIEW sebelum commit
-- Risiko/keterbatasan: foundation only — belum ada fitur produk, schema, atau RLS
+- Cara verifikasi: flutter analyze (No issues) + flutter test (1/1) + secret scan + fresh clone — CP-00 GATE REPORT: docs/logs/CP-00-gate-report.md (PASS)
+- Perubahan manual setelah output AI: deprecated `anonKey` → `publishableKey`, import/annotation dibersihkan saat REVIEW
+- Risiko/keterbatasan: foundation only — belum ada fitur produk, schema, atau RLS; stakeholder belum divalidasi (CP-01)
