@@ -28,3 +28,12 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Cara verifikasi: flutter analyze (No issues) + flutter test (1/1) + secret scan + fresh clone — CP-00 GATE REPORT: docs/logs/CP-00-gate-report.md (PASS)
 - Perubahan manual setelah output AI: deprecated `anonKey` → `publishableKey`, import/annotation dibersihkan saat REVIEW
 - Risiko/keterbatasan: foundation only — belum ada fitur produk, schema, atau RLS; stakeholder belum divalidasi (CP-01)
+
+### Entry — 2026-09-25 (Sprint 1 / CP-01)
+- Tool/model: opencode / mimo-v2.6-flash-free
+- Tujuan: CP-01 problem & stakeholder validation (dokumen & instrumen; NOL data fabrikasi)
+- Bagian yang dibantu: charter, problem statement hipotesis, stakeholder map, interview script, evidence log template, journey/pain hypothesis, benefit indicators, assumptions register, risk update, gate report
+- File/artefak terdampak: docs/capstone/cp01-*.md, RISK_REGISTER.md, LOGBOOK.md, docs/logs/CP-01-gate-report.md
+- Cara verifikasi: evidence log = 0 entri (sengaja); semua H-xx/A-xx berstatus hipotesis/unknown; gate NOT PASS
+- Perubahan manual setelah output AI: REVIEW checklist PROMPTS §6 dijalankan; tidak ada PRD diubah (belum ada findings)
+- Risiko/keterbatasan: gate terblokir sampai wawancara nyata dijalankan pemilik project (R-011)

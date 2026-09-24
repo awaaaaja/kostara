@@ -13,4 +13,8 @@ Diperbarui minimal setiap sprint. Kolom: ID, Risk, Impact, Likelihood, Mitigatio
 | R-007 | Scope terlalu besar → deadline gagal | High | Medium | Disiplin V1/P1/V2; quality gate > sprint calendar | Open | 2026-09-25 |
 | R-008 | Metric ML direkayasa → integritas akademik gagal | Critical | Low | Semua metric direproduksi dari experiment artifact; dilarang (AGENTS §4.4) | Open | 2026-09-25 |
 | R-009 | Stakeholder tidak tersedia untuk CP-01 | High | Medium | Interview plan dibuat; evidence ditandai pending bila belum ada | Open | 2026-09-25 |
-| R-010 | Model bias ke listing populer | Medium | Medium | Content metadata + coverage metric + cold-start analysis | Open | 2026-09-25 |
+| R-010 | Model bias ke listing populer | High | Medium | Content metadata + coverage metric + cold-start analysis | Open | 2026-09-25 |
+| R-011 | Evidence CP-01 tidak terkumpul → gate terblokir, sprint bergeser | Critical | High | Instrumen siap (`docs/capstone/cp01-interview-plan.md`); jadwalkan 3-5 seeker + 2-3 owner; gate hanya dievaluasi ulang dengan evidence nyata | Open | 2026-09-25 |
+| R-012 | Rekrutmen partisipan sulit (sukarela, jadwal kuliah) | Medium | Medium | Kanal grup kampus/UKM; sesi 20-40 menit; tawarkan ringkasan hasil anonim | Open | 2026-09-25 |
+| R-013 | A-05 ditolak (filter sudah cukup) → scope ML-1 turun | High | Medium | Baseline popularity/content tetap bisa jadi POCP; putuskan di CP-03 berdasarkan evidence, bukan preferensi teknologi | Open | 2026-09-25 |
+| R-014 | Bias instrumen interview (leading question) merusak evidence | High | Low | Script netral (`cp01-interview-plan.md` §2-4); larangan menyebut "AI" di pembuka; kutipan dicatat apa adanya | Open | 2026-09-25 |
