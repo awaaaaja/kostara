@@ -1,0 +1,23 @@
+# Secrets — NEVER commit (Supabase credentials live in Aman.md locally only)
+Aman.md
+.env
+.env.*
+*.env
+secrets/
+service_role*
+*-service-role*
+
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+
+# Coverage / misc
+coverage/
+*.log
+.DS_Store
