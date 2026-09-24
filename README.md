@@ -148,3 +148,45 @@ Jangan mulai coding dengan asumsi. Baca:
 Lalu lakukan fase pertama dengan:
 
 **THINK → BUILD → REVIEW → FIX → PASS**
+
+---
+
+## Getting Started (CP-00 foundation)
+
+### Prasyarat
+
+- Flutter stable (dikunci saat bootstrap: Flutter 3.44.9 / Dart SDK ^3.12.2)
+- Akun Supabase project KOSTARA (kredensial ada di `Aman.md` — **git-ignored, jangan commit/publish**)
+
+### Menjalankan
+
+```bash
+flutter pub get
+flutter run \
+  --dart-define=SUPABASE_URL=<dari Aman.md> \
+  --dart-define=SUPABASE_ANON_KEY=<dari Aman.md>
+```
+
+Tanpa `--dart-define`, aplikasi tetap boots (mode foundation, Supabase belum terhubung).
+
+### Validasi wajib sebelum commit
+
+```bash
+dart format .
+flutter analyze
+flutter test
+git ls-files   # pastikan Aman.md / .env tidak muncul
+```
+
+### Struktur (lihat ADR-001)
+
+```text
+lib/            app Flutter (core + features)
+test/           test harness baseline
+supabase/       migrations, functions, seed
+docs/           decisions (ADR), logs
+data/           schemas
+.github/        CI baseline
+AGENTS.md ...   source of truth (baca sebelum coding)
+Aman.md         secrets lokal — TIDAK PERNAH di-commit
+```
