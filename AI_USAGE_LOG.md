@@ -180,3 +180,27 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Risiko/keterbatasan: kesimpulan rapuh pada data sintetis kecil;
   evaluator = parity praktis, bukan eksekusi SQL asli di Postgres
   (formula diport, diassert lewat selftest) — dicatat di MODEL_CARD §3b
+
+## 2026-09-25 — Skema Price Intelligence (migrasi 010017/010018) + uji
+- Tujuan: implementasi schema layer fitur harga sesuai THINK gate yang
+  telah disetujui (district prasyarat + tabel observasi/estimasi + RLS)
+- Bagian yang dibantu: penulisan 2 file migrasi (seed SQL dari ekstraksi
+  poligon sumber terverifikasi + checksum), penambahan kasus uji
+  TP-PRICE-01a..e (run_db_tests) dan TP-RLS-09a..h (test_rls_matrix),
+  perbaikan assertion 0-baris-UPDATE, LOGBOOK entry
+- File/artefak terdampak: supabase/migrations/20260925010017_padang_districts.sql
+  (baru), 20260925010018_price_intelligence.sql (baru),
+  scripts/run_db_tests.py, scripts/test_rls_matrix.py, LOGBOOK.md,
+  AI_USAGE_LOG.md; DB dev: districts (11), properties.district (12),
+  room_price_observations (40+uji→bersih via cascade), price_estimates
+- Cara verifikasi: run_db_tests 32/32 · rls_matrix 65/65 · tenancy_flow
+  30/30 · cp04b_flow 35/35 · dart format 0 · analyze 0 · test 33/33 ·
+  scan secret+emoji bersih; cross-check ray-cast vs PostGIS ST_Covers
+  identik pada 12 titik properti
+- Perubahan manual setelah output AI: pemilihan sumber batas (GitHub
+  wilayah_boundaries vs big.go.id yang mati) + tie-break poligon overlap
+  ditetapkan & didokumentasikan manual; penamaan nomor migrasi
+  010017/010018 direvisi dari rencana THINK
+- Risiko/keterbatasan: seed properti sintetis → hasil district mengikuti
+  poligon, bukan teks alamat; subdistrict NULL V1; observasi dev kini 40
+  baris (bukan data latih — export dataset = tahap berikutnya)

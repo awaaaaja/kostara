@@ -145,3 +145,36 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   (MODEL_CARD §7, R-026); parity tersisa: haversine vs PostGIS, popularity
   serving all-time. Lanjut: Phase B (pipeline data harga — Kaggle AirROI
   creds = stop-and-ask)
+
+## 2026-09-25 — Price Intelligence: skema (migrasi 010017+010018) + uji RLS/TRIGGER
+- Status: **PASS** — schema layer untuk "KOSTARA Rental Price Intelligence"
+  (THINK gate terdahulu) di dev; Fitur §7 contract butuh `district` →
+  keputusan: sumber batas kecamatan = cahyadsn/wilayah_boundaries (MIT,
+  Kepmendagri 300.2.2-2430/2025, sha256 `94ef0987…54bf`), filter
+  `13.71.*` = 11 Kota Padang kecamatan; geoservices.big.go.id timeout;
+  kelurahan/subdistrict = NULL di V1 (data gap terdokumentasi); overlap
+  batas hingga ~1,1 km² → tie-break `order by kode limit 1`
+- Deviasi numbering: THINK menyebut 010017 utk tabel harga, tapi prasyarat
+  district dibuat 010017 lalu tabel harga 010018 (dicatat di sini)
+- `20260925010017_padang_districts.sql`: tabel `districts` (11 poligon
+  ~11,6 kB, GiST), fn `district_for_point` (security definer, revoke
+  public/grant service_role), kolom `properties.district` + trigger
+  district dari `location` (klien tak bisa set manual), backfill 12/12,
+  RLS enable + policy select master
+- `20260925010018_price_intelligence.sql`: `model_versions` +kind
+  `pricer`; FK `rooms(id,property_id)`; `room_price_observations`
+  (unique room×waktu, trigger price-change dari `rooms`, backfill 40
+  `seed_backfill`); `room_price_feature_snapshot` helper (facility slugs,
+  nearest campus+km, district, koordinat); `price_estimates` (server-only
+  write, check status/interval/quality); view `price_insight_public`
+  (label posisi saja, verified+active, grant anon)
+- Bukti: run_db_tests **32/32** (TP-RLS-08 26/26, TP-PRICE-01a..e) ·
+  rls_matrix **65/65** (TP-RLS-09a..h) · tenancy_flow 30/30 ·
+  cp04b_flow 35/35 (1x ConnectionReset transient, rerun hijau) ·
+  dart format 0 · flutter analyze 0 · flutter test 33/33 · scan bersih
+- Catatan: run `dart format --line-length=100` sempat mengubah 49 file
+  Dart → di-revert (repo pakai default), jalur format resmi `dart format .`;
+  UPDATE tanpa policy = Postgres 0 baris (bukan error) → assertion uji
+  wajib cek nilai tak berubah via service
+- Lanjut: Phase B extraction dataset harga (lokal, DQ) lalu stop-and-ask
+  Kaggle AirROI creds

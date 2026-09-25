@@ -26,6 +26,7 @@ BUSINESS_TABLES = [
     "payment_schedules", "payment_records", "reminders", "model_versions",
     "model_params", "reviews", "review_aspect_scores", "reports",
     "recommendation_logs", "audit_logs",
+    "districts", "room_price_observations", "price_estimates",
 ]
 
 results: list[tuple[str, str, str]] = []
@@ -310,9 +311,49 @@ r = one_row(
         where t.schemaname = 'public' and t.tablename = any (array[{','.join(repr(t) for t in BUSINESS_TABLES)}])
           and not exists (select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = t.tablename)) as no_policy"""
 )
-record("TP-RLS-08 23 tabel RLS aktif + ada policy",
-       r["enabled"] == 23 and r["no_policy"] == 0,
-       f"rls={r['enabled']}/23 no_policy={r['no_policy']}")
+record("TP-RLS-08 26 tabel RLS aktif + ada policy",
+       r["enabled"] == 26 and r["no_policy"] == 0,
+       f"rls={r['enabled']}/26 no_policy={r['no_policy']}")
+
+print("== TP-PRICE price intelligence ==")
+record("TP-PRICE-01a districts 11 kecamatan valid",
+       scalar("select count(*)::int from public.districts") == 11
+       and scalar("select count(*)::int from public.districts where not st_isvalid(geom)") == 0,
+       f"n={scalar('select count(*)::int from public.districts')}")
+record("TP-PRICE-01b semua properties punya district valid",
+       scalar("select count(*)::int from public.properties where district is null") == 0
+       and scalar("""select count(*)::int from public.properties p
+                     left join public.districts d on d.nama = p.district
+                     where d.nama is null""") == 0,
+       "null/invalid=0")
+record("TP-PRICE-01c observasi backfill ≥1 per kamar berharga",
+       scalar("""select count(distinct room_id)::int
+                 from public.room_price_observations
+                 where source_type = 'seed_backfill'""")
+       == scalar("select count(*)::int from public.rooms where price > 0"),
+       f"obs_rooms={scalar('select count(distinct room_id)::int from public.room_price_observations')}")
+expect_error(
+    "TP-PRICE-01d pasangan room×property tidak konsisten ditolak FK",
+    """insert into public.price_estimates (room_id, property_id, status, actual_price)
+       select r.id, (select p2.id from public.properties p2
+                     where p2.id <> r.property_id limit 1), 'failed', 1000000
+       from public.rooms r limit 1""",
+    "price_estimates_room_id_property_id_fkey")
+# trigger observasi: buat kamar uji, ubah harga 2×, assert, hapus (cascade)
+TEST_ROOM_OBS = "22222222-0000-4000-8000-000000000099"
+run_sql.run(f"delete from public.rooms where id = '{TEST_ROOM_OBS}'")
+run_sql.run(f"""insert into public.rooms (id, property_id, code, room_type, price)
+                select '{TEST_ROOM_OBS}', id, 'ZZ-OBS-TEST', 'single', 1000000
+                from public.properties order by created_at limit 1""")
+n_base = scalar(f"select count(*)::int from public.room_price_observations where room_id = '{TEST_ROOM_OBS}'")
+run_sql.run(f"update public.rooms set price = price + 1 where id = '{TEST_ROOM_OBS}'")
+run_sql.run(f"update public.rooms set status = 'available' where id = '{TEST_ROOM_OBS}'")  # no price change
+n_after = scalar(f"select count(*)::int from public.room_price_observations where room_id = '{TEST_ROOM_OBS}'")
+run_sql.run(f"delete from public.rooms where id = '{TEST_ROOM_OBS}'")
+n_gone = scalar(f"select count(*)::int from public.room_price_observations where room_id = '{TEST_ROOM_OBS}'")
+record("TP-PRICE-01e trigger: harga+1 → +1 observasi; tanpa-ubah → tidak; delete → cascade",
+       n_base == 1 and n_after == 2 and n_gone == 0,
+       f"base={n_base} after={n_after} gone={n_gone}")
 
 fails = [x for x in results if x[1] == "FAIL"]
 print(f"\n== SUMMARY: {len(results) - len(fails)}/{len(results)} PASS ==")

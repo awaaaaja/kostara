@@ -357,6 +357,76 @@ st, _ = req("GET", f"{SUPA}/storage/v1/object/verification-documents-private/{ui
             token=TOK["seeker1"])
 record("TP-STOR-01i seeker lain baca dokumen private ditolak", st != 200, f"status={st}")
 
+print("== TP-RLS-09 price intelligence ==")
+# districts: referensi publik baca-saja
+st, out = rest("GET", "districts?select=kode")
+record("TP-RLS-09a anon baca districts (master aktif)",
+       st == 200 and len(out or []) == 11, f"{st}/{len(out or [])}")
+st, body = rest("PATCH", "districts?kode=eq.13.71.01", TOK["seeker1"],
+                body={"is_active": False})
+st_v, val = svc("GET", "rest/v1/districts?kode=eq.13.71.01&select=is_active")
+unchanged = isinstance(val, list) and val and val[0]["is_active"] is True
+record("TP-RLS-09b update districts ditolak RLS (0 baris)",
+       (st in (401, 403) or (st in (200, 204) and not body)) and unchanged,
+       f"status={st} still_active={unchanged}")
+# room_price_observations: owner-own read; no client write
+owner1_uid = json.loads(base64.urlsafe_b64decode(TOK["owner1"].split(".")[1] + "=="))["sub"]
+st, own1_prop = svc("GET", f"rest/v1/properties?select=id&owner_id=eq.{owner1_uid}&limit=1")
+p_owner1 = (own1_prop or [{}])[0].get("id") or P1
+st, out = rest("GET", f"room_price_observations?property_id=eq.{p_owner1}&select=id",
+               TOK["owner1"])
+n_owner = len(out or [])
+st2, out2 = rest("GET", "room_price_observations?select=id", TOK["seeker1"])
+st3, out3 = rest("GET", "room_price_observations?select=id")
+record("TP-RLS-09c observasi: owner lihat sendiri, stranger/anon kosong",
+       st == 200 and n_owner >= 1 and st2 == 200 and not out2
+       and st3 == 200 and not out3,
+       f"owner={n_owner} seeker={len(out2 or [])} anon={len(out3 or [])}")
+st, body = rest("POST", "room_price_observations", TOK["owner1"], body={
+    "property_id": p_owner1, "room_id": "00000000-0000-4000-8000-000000000001",
+    "monthly_price": 999999, "verification_status": "verified",
+    "source_type": "system"})
+record("TP-RLS-09d insert observasi client ditolak (server-only)",
+       st in (401, 403), f"status={st}")
+# price_estimates: tulis server-only; owner-own read; seeker hanya lewat view
+PE_ID = "22222222-0000-4000-8000-000000000009"
+svc("DELETE", f"rest/v1/price_estimates?id=eq.{PE_ID}")
+st_r, room1 = svc("GET", f"rest/v1/rooms?property_id=eq.{p_owner1}"
+                            "&select=id,price&limit=1")
+room_o1 = (room1 or [{}])[0]
+st_b, body_b = svc("POST", "rest/v1/price_estimates", body=[{
+    "id": PE_ID, "room_id": room_o1.get("id"), "property_id": p_owner1,
+    "status": "ok", "model_version": "rls-fixture", "actual_price": 1000000,
+    "estimated_lower": 900000, "estimated_point": 1000000,
+    "estimated_upper": 1100000, "quality_status": "SUFFICIENT_DATA",
+    "price_position": "WITHIN_COMPARABLE_RANGE"}])
+st, body = rest("POST", "price_estimates", TOK["owner1"], body={
+    "room_id": room_o1.get("id"), "property_id": p_owner1, "status": "ok",
+    "actual_price": 1000000})
+record("TP-RLS-09e insert estimasi client ditolak (server-only)",
+       st in (401, 403), f"status={st} fixture={st_b}")
+st, out = rest("GET", f"price_estimates?id=eq.{PE_ID}&select=id", TOK["owner1"])
+st2, out2 = rest("GET", "price_estimates?select=id", TOK["seeker1"])
+st3, out3 = rest("GET", "price_estimates?select=id", TOK["admin"])
+record("TP-RLS-09f estimasi: owner lihat, seeker kosong, admin lihat",
+       st == 200 and len(out or []) == 1 and st2 == 200 and not out2
+       and st3 == 200 and len(out3 or []) >= 1,
+       f"owner={len(out or [])} seeker={len(out2 or [])} admin={len(out3 or [])}")
+st, body = rest("PATCH", f"price_estimates?id=eq.{PE_ID}", TOK["owner1"],
+                body={"price_position": "ABOVE_RANGE"})
+st_v, val = svc("GET", f"rest/v1/price_estimates?id=eq.{PE_ID}&select=price_position")
+unchanged = isinstance(val, list) and val and val[0]["price_position"] == "WITHIN_COMPARABLE_RANGE"
+record("TP-RLS-09g update estimasi client ditolak (0 baris)",
+       (st in (401, 403) or (st in (200, 204) and not body)) and unchanged,
+       f"status={st} pos={val}")
+st, out = rest("GET", f"price_insight_public?room_id=eq.{room_o1.get('id')}&select=*")
+cols = set((out or [{}])[0].keys()) if out else set()
+record("TP-RLS-09h view publik: label saja, tanpa angka estimasi",
+       st == 200 and len(out or []) == 1
+       and cols <= {"room_id", "price_position", "quality_status", "generated_at"},
+       f"{st}/{sorted(cols)}")
+svc("DELETE", f"rest/v1/price_estimates?id=eq.{PE_ID}")
+
 svc_cleanup(extra_user_ids=(uid['seeker1'], uid['seeker2']), owner_uid=uid['owner1'])
 
 fails = [x for x in results if x[1] == "FAIL"]
