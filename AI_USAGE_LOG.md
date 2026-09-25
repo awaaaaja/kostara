@@ -156,3 +156,27 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Risiko/keterbatasan: build/run on-device deferred (instruksi owner) → R-024;
   seleksi model rapuh → reseleksi CP-05 (R-026); NLP gate tertutup (R-002,
   R-017); `fire_at` seed ≠ app (R-025, P2)
+
+## 2026-09-25 — Phase 0-C parity ML rekomendasi (pre-gate ML Price Intelligence)
+- Tujuan: memenuhi keputusan THINK gate (opsi C): evaluasi parity
+  training-serving dengan formula SQL yang sama sebelum pipeline harga
+  dibangun
+- Bagian yang dibantu: `tune_feed_weights.py` baru (port formula SQL +
+  selftest + grid tuning val + evaluasi test 3 kandidat + determinism);
+  refactor `activate_model.py` (baca manifest feed_runs, fallback legacy);
+  update MODEL_CARD §3b/§4/§6/§7, ADR-005 Validation, LOGBOOK entry
+- File/artefak terdampak: experiments/recommendation/tune_feed_weights.py
+  (baru), activate_model.py, MODEL_CARD.md, feed_runs/20260925T182134Z/,
+  docs/decisions/ADR-005, LOGBOOK.md, AI_USAGE_LOG.md; DB dev:
+  model_versions/model_params (aktivasi popularity)
+- Cara verifikasi: `--selftest` PASS; double-run deterministik identik;
+  activate --dry-run lalu real run; feed RPC live `popularity` 5 item;
+  test_cp04b_flow 35/35 · run_db_tests 27/27 · rls_matrix 57/57 ·
+  tenancy_flow 30/30 · flutter analyze 0 · flutter test 33/33
+- Perubahan manual setelah output AI: interpretasi A8 (popularity menang di
+  test → rilis baseline) diverifikasi ulang terhadap cp02-data-dictionary
+  gate sebelum aktivasi; penulisan limitation (val saturated, n=3, haversine
+  vs PostGIS) ditulis eksplisit agar tidak terbaca sebagai klaim kualitas
+- Risiko/keterbatasan: kesimpulan rapuh pada data sintetis kecil;
+  evaluator = parity praktis, bukan eksekusi SQL asli di Postgres
+  (formula diport, diassert lewat selftest) — dicatat di MODEL_CARD §3b

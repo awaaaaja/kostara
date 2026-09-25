@@ -114,3 +114,34 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   DESIGN §35 (app lebih jujur — rekomendasi perbarui DESIGN); `fire_at`
   seed 00:00 WIB vs app 09:00 WIB P2 (R-025); build on-device deferred
   (R-024). Sprint 7 (CP-05A) AUTHORIZED.
+
+## 2026-09-25 — Phase 0-C: Parity Training-Serving Rekomendasi (pre-gate ML Price Intelligence)
+- Status: **PASS** — jalur ML parity opsi C (disetujui owner di THINK gate
+  feature "KOSTARA Rental Price Intelligence")
+- Yang dikerjakan: `experiments/recommendation/tune_feed_weights.py` —
+  port 1:1 formula SQL `feed_recommendations` (migrasi 010010: hard filter
+  available+budget+gender+radius kampus, 5 komponen, tie-break
+  score→popularity→uuid) + `--selftest` (haversine, filter, tie-break);
+  grid 16.807 konfigurasi bobot di **val** (sebelumnya mati), 3 kandidat
+  dievaluasi di **test** dengan formula identik; determinism double-run;
+  output `feed_runs/<ts>/{metrics,manifest}.json`. `activate_model.py`
+  kini membaca `feed_params` + metrik test dari manifest feed_runs
+  (fallback run_baselines + PARAMS legacy bila feed_runs kosong)
+- Hasil (jujur, tanpa poles): val saturated (semua kandidat NDCG@10 = 1.0);
+  tuned == hand (anchor menang saat seri); test: **popularity 1.0 > hand/
+  tuned 0.877**; coverage 0.417 identik semua kandidat; n_eval=3;
+  n_positives_filtered=21 → gate **CP-02 A8** → model aktif diaktifkan
+  ulang sbg `popularity` terfilter (`w_trending=1.0`, model_version
+  `23cf8b9f-1c72-4d77-8d1c-5d473eddaa7b`, `hybrid` diarchive); personalisasi
+  bertahan di hard filter preferensi + reason_codes (bukan bobot ranking)
+- Bukti: feed RPC live → `popularity`, 5 item · `test_cp04b_flow` 35/35 ·
+  `run_db_tests` 27/27 · `test_rls_matrix` 57/57 · `test_tenancy_flow` 30/30
+  (catatan: run paralel rls_matrix×tenancy_flow = race harness DB — jalur
+  sekuensial hijau, bukan bug aplikasi) · `dart format` 0 · `flutter analyze`
+  0 · `flutter test` 33/33 · secret+emoji scan bersih · MODEL_CARD §3b/§4/§6/§7
+  + ADR-005 Validation diperbarui
+- Catatan: kesimpulan "popularity menang" rapuh (val saturated, n=3) —
+  dicatat eksplisit; reseleksi + re-tune wajib saat dataset berubah material
+  (MODEL_CARD §7, R-026); parity tersisa: haversine vs PostGIS, popularity
+  serving all-time. Lanjut: Phase B (pipeline data harga — Kaggle AirROI
+  creds = stop-and-ask)
