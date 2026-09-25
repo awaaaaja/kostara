@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Baseline rekomendasi (CP-03B): popularity + content-based.
+"""Baseline rekomendasi (CP-03B/04B): popularity + content-based + hybrid.
 
 - Split temporal 70/10/20 (CP-02 A6) — tanpa leakage masa depan.
 - Kandidat = hard filter preferensi user (CP-02 A1); jika menyaring test
@@ -223,12 +223,34 @@ def rank_popularity(cand_ids, pop: pd.Series) -> list:
     return list(sc.sort_values(ascending=False, kind="stable").index)
 
 
-def rank_content(uid, cand_ids, item_vec, item, ev_train, prefs, camp_pts, fac_idx) -> list:
+def content_scores(uid, cand_ids, item_vec, item, ev_train, prefs, camp_pts,
+                   fac_idx) -> np.ndarray:
     u = user_vector(uid, ev_train, item_vec, item, prefs, fac_idx)
     x = item_vec[item.index.get_indexer(cand_ids)]
     denom = np.linalg.norm(u) * np.linalg.norm(x, axis=1)
     cos = np.divide(x @ u, denom, out=np.zeros(len(cand_ids)), where=denom > 0)
-    score = 0.8 * cos + 0.2 * geo_score(uid, cand_ids, item, prefs, camp_pts)
+    return 0.8 * cos + 0.2 * geo_score(uid, cand_ids, item, prefs, camp_pts)
+
+
+def rank_content(uid, cand_ids, item_vec, item, ev_train, prefs, camp_pts, fac_idx) -> list:
+    score = content_scores(uid, cand_ids, item_vec, item, ev_train, prefs,
+                           camp_pts, fac_idx)
+    order = np.argsort(-score, kind="stable")
+    return [cand_ids[i] for i in order]
+
+
+# Kandidat hybrid (CP-04B): content-based + popularity (implicit signal train).
+# alpha = design parameter — diekstrimen, bukan klaim kebenaran (AGENTS §11.3).
+HYBRID_ALPHA = 0.7
+
+
+def rank_hybrid(uid, cand_ids, pop, item_vec, item, ev_train, prefs, camp_pts,
+                fac_idx) -> list:
+    cont = content_scores(uid, cand_ids, item_vec, item, ev_train, prefs,
+                          camp_pts, fac_idx)
+    popv = np.array([float(pop.get(c, 0.0)) for c in cand_ids])
+    popn = popv / max(popv.max(), 1e-9)
+    score = HYBRID_ALPHA * cont + (1 - HYBRID_ALPHA) * popn
     order = np.argsort(-score, kind="stable")
     return [cand_ids[i] for i in order]
 
@@ -304,9 +326,14 @@ def run_once() -> dict:
     def cb_fn(uid, cands, pop, train, ivec):
         return rank_content(uid, cands, ivec, item, train, prefs, camp_pts, fac_idx)
 
+    def hy_fn(uid, cands, pop, train, ivec):
+        return rank_hybrid(uid, cands, pop, ivec, item, train, prefs,
+                           camp_pts, fac_idx)
+
     return {
         "popularity": evaluate(pop_fn, ev, item, prefs, camp_pts, fac_idx, item_vec),
         "content_based": evaluate(cb_fn, ev, item, prefs, camp_pts, fac_idx, item_vec),
+        "hybrid": evaluate(hy_fn, ev, item, prefs, camp_pts, fac_idx, item_vec),
     }
 
 
@@ -345,7 +372,8 @@ def main() -> None:
         "ks": list(KS),
         "interaction_weights": WEIGHTS,
         "params": {"cb_geo_weight": 0.2, "cb_cos_weight": 0.8,
-                   "cb_history_alpha_events": 10},
+                   "cb_history_alpha_events": 10,
+                   "hybrid_alpha": HYBRID_ALPHA},
         "deterministic_rerun": same,
         "timestamp_utc": ts,
         "data_note": "dataset dev sintetis seed — BUKAN production data",
