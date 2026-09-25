@@ -91,3 +91,26 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   analyzer). On-device build **deferred atas instruksi owner** ("build
   nanti saja") → R-024; ToS draft final menunggu ok owner (R-017 mitigated
   parsial); A5/A7/A8/A9-sisa → CP-04B. Sprint 6 (CP-04B) AUTHORIZED.
+
+## 2026-09-25 — Sprint 6 / CP-04B ML + Tenancy + Payment + Feedback + Admin
+- Status: **PASS** — gate report: `docs/logs/CP-04B-gate-report.md`
+- Bukti: 7 migration aditif (`…010010`–`…010016`; termasuk 2 supersede:
+  rooms_select +app_is_admin, facilities_deactivate security definer), model
+  hybrid α=0.7 aktif (`model_versions c626ac15…`, run bersih `…T170952Z`
+  git_dirty=false, determinism lintas run identik, MODEL_CARD limitation
+  jujur n_eval=3), Flutter: payment schedule + notifikasi lokal (tanpa exact
+  alarm, boot reschedule) + riwayat + setup offset 7/3/1/0, review submit
+  8 aspek + report + insight owner, feed fallback jujur + copy tanpa
+  probabilitas, konsol admin (verifikasi/moderasi/master/model ringkasan),
+  hapus akun (storage prefixes + anonimisasi) — `flutter analyze` 0 ·
+  `flutter test` 33/33 (review validation + copy scan + payment unit) ·
+  `run_db_tests` 27/27 · `test_rls_matrix` 57/57 · `test_tenancy_flow`
+  30/30 · **`test_cp04b_flow` 35/35** (baru, REST end-to-end 5 role) ·
+  latency feed p95 478 ms · secret+emoji scan bersih
+- Catatan: 6 masalah ditemukan & diperbaiki saat REVIEW (P0 manifest
+  `</activity>` kembar, P1 rooms count 36/40, P1 trigger 0-row, P1 test
+  body-array storage, P1 emoji, batch bug authoring suite). NLP = N/A by
+  gate (4 review rows, tanpa metrik karangan); copy fallback ≠ literal
+  DESIGN §35 (app lebih jujur — rekomendasi perbarui DESIGN); `fire_at`
+  seed 00:00 WIB vs app 09:00 WIB P2 (R-025); build on-device deferred
+  (R-024). Sprint 7 (CP-05A) AUTHORIZED.

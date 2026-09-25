@@ -124,3 +124,35 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Risiko/keterbatasan: build/run on-device deferred (instruksi owner) → R-024;
   teks ToS menunggu ok owner (R-017); mailbox E2E belum ada (R-023 parsial);
   sweep breakpoint/text-scale butuh device (CP-05A)
+
+## 2026-09-25 — CP-04B ML + Tenancy + Payment + Feedback + Admin (Sprint 6)
+- Tujuan: CP-04B — seleksi hybrid berbasis metrik (tanpa klaim novelty),
+  pengingat jadwal bayar, review verified 8 aspek + moderasi admin, hapus
+  akun, gate report dengan evidence yang dieksekusi di sesi
+- Bagian yang dibantu: 7 migration `…010010`–`…010016` (feed rpc, audit rpc,
+  due calculator, aspect, admin policy, 2 supersede fix); `run_baselines.py`
+  hybrid α + `MODEL_CARD.md` + `activate_model.py`; Flutter payment/reminder
+  (`core/notifications`, `payment_schedule`, layar riwayat/setup/sync),
+  `features/feedback/**`, `features/admin/**`, router/shell, delete-account,
+  home feed fallback/copy; `scripts/test_cp04b_flow.py` (35 kasus) +
+  `test/{copy_scan,review_validation,payment_schedule}_test.dart`; LOGBOOK,
+  RISK_REGISTER, gate report CP-04B
+- File/artefak terdampak: supabase/migrations/** (7 baru), experiments/**,
+  lib/** (fitur payment/feedback/admin/auth/router/discovery), scripts/**,
+  test/** (3 baru), android manifest, docs/logs/CP-04B-gate-report.md,
+  LOGBOOK.md, RISK_REGISTER.md
+- Cara verifikasi: flutter analyze (0) · flutter test 33/33 ·
+  run_db_tests 27/27 · test_rls_matrix 57/57 · test_tenancy_flow 30/30 ·
+  test_cp04b_flow 35/35 (2×, termasuk setelah activate model) ·
+  determinism run lintas-run identik + git_dirty=false · latency feed
+  p50 169/p95 478 ms (15 panggilan) · XML manifest parse · secret+emoji
+  scan bersih — semua angka dieksekusi di sesi ini
+- Perubahan manual setelah output AI: P0 manifest `</activity>` kembar
+  ditemukan lewat parse XML (bukan asumsi); kontrak delete storage dikoreksi
+  ke `{"prefixes":[…]}` setelah membaca `storage_client` 2.8 lokal (app
+  benar, test salah); copy fallback dikoreksi agar tidak mengklaim
+  "berdasarkan preferensi" padahal fallback popularity; limitation seleksi
+  hybrid (n_eval=3, gap 0.0) ditulis sendiri di MODEL_CARD §3
+- Risiko/keterbatasan: build/run on-device deferred (instruksi owner) → R-024;
+  seleksi model rapuh → reseleksi CP-05 (R-026); NLP gate tertutup (R-002,
+  R-017); `fire_at` seed ≠ app (R-025, P2)
