@@ -244,6 +244,62 @@ record("TP-PRIV-02 panggilan GPS/feed tidak meninggalkan jejak (uid null)",
        r["i1"] == r2["i2"] and r["l1"] == r2["l2"],
        f"interactions {r['i1']}->{r2['i2']}, logs {r['l1']}->{r2['l2']}")
 
+print("== TP-REC fallback model (AC-REC-03) ==")
+active = run_sql.run(
+    """select id from public.model_versions
+       where kind = 'recommender' and status = 'active' limit 1"""
+)
+if active:
+    active_id = active[0]["id"]
+    try:
+        run_sql.run(
+            """update public.model_versions set status = 'draft'
+               where kind = 'recommender' and status = 'active'"""
+        )
+        fb_row = run_sql.run(
+            "select public.feed_recommendations(3) as r"
+        )[0]
+        fb_name = fb_row["r"]["model_name"]
+    finally:
+        # wajib kembali aktif walau assert gagal — feed produksi dev
+        # tidak boleh tertinggal di fallback.
+        run_sql.run(
+            f"""update public.model_versions set status = 'active'
+                where id = '{active_id}'"""
+        )
+    record(
+        "TP-REC-05 feed fallback baseline-fallback saat tak ada model aktif",
+        fb_name == "baseline-fallback",
+        f"model_name={fb_name}",
+    )
+else:
+    record("TP-REC-05 feed fallback baseline-fallback (tanpa row aktif)", False,
+           "tidak ada model active untuk di-nonaktifkan")
+
+print("== TP-PAY due-date calculator (fn_generate_due_dates) ==")
+r = one_row(
+    "select array_agg(d order by d) as v "
+    "from public.fn_generate_due_dates('2028-01-31', 31, 3) d"
+)
+record("TP-PAY-01a start 31 Jan 2028 kabisat → Feb 29",
+       r["v"] == ["2028-01-31", "2028-02-29", "2028-03-31"], f"v={r['v']}")
+r = one_row(
+    "select array_agg(d order by d) as v "
+    "from public.fn_generate_due_dates('2027-01-31', 31, 3) d"
+)
+record("TP-PAY-01b start 31 Jan 2027 non-kabisat → Feb 28",
+       r["v"] == ["2027-01-31", "2027-02-28", "2027-03-31"], f"v={r['v']}")
+r = one_row(
+    "select array_agg(d order by d) as v "
+    "from public.fn_generate_due_dates('2028-04-30', 31, 3) d"
+)
+record("TP-PAY-01c 30 Apr due_day 31 → Mei 31",
+       r["v"] == ["2028-04-30", "2028-05-31", "2028-06-30"], f"v={r['v']}")
+r = scalar(
+    "select count(*)::int from public.fn_generate_due_dates('2026-09-25', 25, 12)"
+)
+record("TP-PAY-01d 12 due date berurutan bulanan", int(r) == 12, f"n={r}")
+
 print("== TP-RLS enable ==")
 r = one_row(
     f"""select

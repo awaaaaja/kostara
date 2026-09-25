@@ -151,6 +151,26 @@ st4, out4 = rest("GET", "payment_records?select=id", TOK["owner1"])
 record("TP-RLS-01e payment_records per-tenant/owner/anon",
        n1 == 12 and len(out2 or []) == 0 and len(out3 or []) == 0 and len(out4 or []) == 12,
        f"seeker1={n1} seeker2={len(out2 or [])} anon={len(out3 or [])} owner1={len(out4 or [])}")
+# reminders (CP-04B): pihak tenancy vs stranger vs anon (AC-PAY-05)
+st, out = rest("GET", "reminders?select=id&tenancy_id=eq." + T1, TOK["seeker1"])
+n_rem = len(out or [])
+record("TP-RLS-01f reminders pihak lihat miliknya sendiri",
+       st == 200 and n_rem >= 1, f"{st}/{n_rem}")
+st, out = rest("GET", "reminders?select=id", TOK["seeker2"])
+record("TP-RLS-01g reminders stranger kosong",
+       st == 200 and len(out or []) == 0, f"{st}/{len(out or [])}")
+st, out = rest("GET", "reminders?select=id")
+record("TP-RLS-01h reminders anon kosong",
+       st == 200 and len(out or []) == 0, f"{st}/{len(out or [])}")
+st_pr, out_pr = rest("GET", "payment_records?select=id&tenancy_id=eq." + T1
+                     + "&limit=1", TOK["seeker1"])
+pr0 = (out_pr or [{}])[0].get("id")
+st, body = req("POST", f"{SUPA}/rest/v1/reminders", token=TOK["seeker2"], body={
+    "tenancy_id": T1, "payment_record_id": pr0,
+    "fire_at": "2026-09-26T02:00:00Z", "offset_days": 13,
+    "local_notification_id": "zz-test"})
+record("TP-RLS-01i insert reminder atas tenancy lain ditolak",
+       st in (401, 403), f"status={st}")
 
 print("== TP-RLS-02 interactions consent gate ==")
 st, _ = req("POST", f"{SUPA}/rest/v1/interactions", token=TOK["seeker4"], body={
@@ -290,9 +310,16 @@ record("TP-RLS-07d audit_log_write admin ok", st == 200 and isinstance(body, str
 print("== TP-REC feed via REST ==")
 st, out = rpc("feed_recommendations", None, {"p_limit": 5})
 items = (out or {}).get("items") if isinstance(out, dict) else None
-record("TP-REC-01a anon feed memakai p_limit + fallback non-kosong",
-       st == 200 and items and len(items) == 5 and out.get("model_name") == "baseline-fallback",
-       f"{st}/{len(items or [])}/{(out or {}).get('model_name')}")
+# feed memakai model aktif bila ada; fallback (baseline-fallback) bila tidak
+st_a, act = svc("GET", "rest/v1/model_versions?kind=eq.recommender"
+                       "&status=eq.active&select=name")
+active_name = (act[0]["name"] if st_a == 200 and isinstance(act, list) and act
+               else None)
+record("TP-REC-01a anon feed memakai p_limit + model aktif/fallback non-kosong",
+       st == 200 and items and len(items) == 5
+       and out.get("model_name") in (active_name, "baseline-fallback"),
+       f"{st}/{len(items or [])}/{(out or {}).get('model_name')}"
+       f"/active={active_name}")
 st2, logs_before = rest("GET", "recommendation_logs?select=id", TOK["seeker1"])
 st, out = rpc("feed_recommendations", TOK["seeker1"], {"p_limit": 5})
 st3, logs_after = rest("GET", "recommendation_logs?select=id", TOK["seeker1"])
