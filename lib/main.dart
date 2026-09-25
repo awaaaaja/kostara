@@ -32,6 +32,8 @@ class KostaraApp extends ConsumerWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF176B52)),
         useMaterial3: true,
+        // DESAIN §2 (R-022): Plus Jakarta Sans dibundel via pubspec fonts.
+        fontFamily: 'PlusJakartaSans',
       ),
       routerConfig: router,
     );
