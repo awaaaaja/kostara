@@ -204,3 +204,23 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Risiko/keterbatasan: seed properti sintetis → hasil district mengikuti
   poligon, bukan teks alamat; subdistrict NULL V1; observasi dev kini 40
   baris (bukan data latih — export dataset = tahap berikutnya)
+
+## 2026-09-25 — Phase B lokal Price Intelligence (export + DQ pipeline)
+- Tujuan: ekstraksi dataset harga lokal dari Supabase tanpa mengarang data
+  (ML_PRICE_INTELLIGENCE §18) + automated DQ (§8) sebelum training
+- Bagian yang dibantu: menulis `experiments/price/export_dataset.py`
+  (adaptasi pola export_dataset.py rekomendasi, drop kolom PII) dan
+  `validate_dataset.py` (11 check DQ + dq_report.json), audit SQL
+  ketersediaan kolom vs feature contract §7
+- File/artefak terdampak: experiments/price/{export_dataset,validate_dataset}.py
+  (baru), experiments/price/runs/20260925T192909Z/dq_report.json (baru),
+  LOGBOOK.md, AI_USAGE_LOG.md; data/raw/price/ (gitignored)
+- Cara verifikasi: export 7 tabel + metadata checksum; validate exit 0 =
+  QUALITY PASS; 2 baris observasi artefak uji dihapus terverifikasi
+  (sisa 40 = backfill seed)
+- Perubahan manual setelah output AI: konvensi lokasi `experiments/price/`
+  (bukan §16 `ml/price_intelligence/`) sesuai struktur repo aktual; nilai
+  bbox pilot & rentang harga ekstrem ditetapkan manual utk Padang
+- Risiko/keterbatasan: hanya 2 district terpakai di seed; 40 baris = dev
+  seed, bukan data operasional; feature §7 tanpa subdistrict/travel_time
+  (gap V1 terdokumentasi di DQ-11)

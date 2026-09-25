@@ -178,3 +178,25 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   wajib cek nilai tak berubah via service
 - Lanjut: Phase B extraction dataset harga (lokal, DQ) lalu stop-and-ask
   Kaggle AirROI creds
+
+## 2026-09-25 — Price Intelligence: Phase B lokal (audit ketersediaan + ingest/DQ)
+- Status: **QUALITY PASS (lokal)** — bagian Phase B yang tak butuh Kaggle
+- Audit ketersediaan data dev nyata: 12 properti (12 lokasi+district, 10
+  verified+active), 40 kamar (harga 650k–1,95M, median 1,05M; size_sqm
+  40/40; 3 tipe), 37 link fasilitas (10 slug), 5 kampus, 40 observasi
+  (2 baris artefak uji ad-hoc dihapus — bukan data historis asli)
+- `experiments/price/export_dataset.py` (pola export_dataset.py rekomendasi):
+  7 tabel → `data/raw/price/*.parquet` (gitignored), PII `owner_id/
+  description/rules` dibuang, metadata.json (dataset_version
+  `kostara-padang-v1-ed0ada2321be30cd`, sha256 per file, git commit)
+- `experiments/price/validate_dataset.py`: DQ-01..11 per §8 (unique id,
+  referensi, harga>0, bbox pilot lat[-1.10,-0.55] lng[100.20,100.75],
+  area>0, ekstrem, duplikat, timestamp, tanpa PII, kategori kanonik,
+  missing terdokumentasi) → **QUALITY PASS**, 40 baris training view,
+  report `experiments/price/runs/20260925T192909Z/dq_report.json`
+- Struktur: `experiments/price/` mengikuti konvensi repo (§16 ml/
+  price_intelligence dimodifikasi — "sesuaikan codebase aktual"); FastAPI
+  nanti di `services/price/` (ADR-007)
+- Bukti: export+validate hijau · scan secret+emoji bersih
+- Belum: unduh AirROI (butuh Kaggle creds — stop-and-ask), dataset card
+  benchmark, inspeksi schema AirROI → gate DATA PASS penuh tertahan

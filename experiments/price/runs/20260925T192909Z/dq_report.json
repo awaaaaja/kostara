@@ -1,0 +1,102 @@
+{
+  "created_at": "2026-09-25T19:29:09+00:00",
+  "dataset_version": "kostara-padang-v1-ed0ada2321be30cd",
+  "rows_raw": {
+    "observations": 40,
+    "rooms": 40,
+    "properties": 12
+  },
+  "rows_training_view": 40,
+  "price_distribution": {
+    "min": 650000,
+    "median": 1050000,
+    "max": 1950000,
+    "mean": 1103750
+  },
+  "property_group_counts": {
+    "a0000000-0000-4000-8000-000000000001": 4,
+    "a0000000-0000-4000-8000-000000000010": 4,
+    "a0000000-0000-4000-8000-000000000004": 4,
+    "a0000000-0000-4000-8000-000000000002": 4,
+    "a0000000-0000-4000-8000-000000000008": 4,
+    "a0000000-0000-4000-8000-000000000006": 4,
+    "a0000000-0000-4000-8000-000000000009": 3,
+    "a0000000-0000-4000-8000-000000000003": 3,
+    "a0000000-0000-4000-8000-000000000005": 3,
+    "a0000000-0000-4000-8000-000000000007": 3,
+    "a0000000-0000-4000-8000-000000000011": 2,
+    "a0000000-0000-4000-8000-000000000012": 2
+  },
+  "feature_columns": [
+    "address",
+    "deposit",
+    "district",
+    "facility_slugs",
+    "gender_policy",
+    "lat",
+    "lng",
+    "nearest_campus_km",
+    "nearest_campus_name",
+    "room_status",
+    "room_type",
+    "size_sqm"
+  ],
+  "checks": [
+    {
+      "id": "DQ-01 unique observation id",
+      "status": "PASS",
+      "detail": "n=40 unique=40"
+    },
+    {
+      "id": "DQ-02 room/property reference valid",
+      "status": "PASS",
+      "detail": "pair_consistent=True"
+    },
+    {
+      "id": "DQ-03 monthly_price > 0",
+      "status": "PASS",
+      "detail": "min=650000 max=1950000"
+    },
+    {
+      "id": "DQ-04 koordinat valid + dalam pilot bbox",
+      "status": "PASS",
+      "detail": "lat[-0.9450,-0.9165] lng[100.3655,100.4895]"
+    },
+    {
+      "id": "DQ-05 area kamar positif",
+      "status": "PASS",
+      "detail": "min=12 null=0"
+    },
+    {
+      "id": "DQ-06 tidak ada harga ekstrem tak wajar",
+      "status": "PASS",
+      "detail": "n_extreme=0"
+    },
+    {
+      "id": "DQ-07 tanpa duplikat kamar di training view",
+      "status": "PASS",
+      "detail": "dup=0"
+    },
+    {
+      "id": "DQ-08 observed_at tersedia",
+      "status": "PASS",
+      "detail": "null=0"
+    },
+    {
+      "id": "DQ-09 tidak ada kolom PII mentah di feature snapshot",
+      "status": "PASS",
+      "detail": "pii_cols=[]; feature_cols=['address', 'deposit', 'district', 'facility_slugs', 'gender_policy', 'lat', 'lng', 'nearest_campus_km', 'nearest_campus_name', 'room_status', 'room_type', 'size_sqm']"
+    },
+    {
+      "id": "DQ-10 kategori kanonik (room_type/gender/district/facility)",
+      "status": "PASS",
+      "detail": "room_type=['shared', 'single', 'studio'] district=['Padang Timur', 'Pauh']"
+    },
+    {
+      "id": "DQ-11 missing values terdokumentasi (kecuali gap V1)",
+      "status": "PASS",
+      "detail": "nulls={}"
+    }
+  ],
+  "status": "QUALITY PASS"
+}
