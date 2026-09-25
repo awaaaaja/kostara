@@ -91,7 +91,7 @@ expect_error(
 expect_error(
     "TP-DB-06 transisi kamar available→occupied tidak valid",
     f"update public.rooms set status = 'occupied' where property_id = '{P1}' and code = 'R2'",
-    "rooms_guard",
+    "rooms_guard:transisi_tidak_valid",
 )
 expect_error(
     "TP-DB-07 review property != tenancy property",
