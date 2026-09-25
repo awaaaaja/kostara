@@ -1,0 +1,71 @@
+{
+  "content_based": {
+    "@10": {
+      "hr": 1.0,
+      "ndcg": 0.8769765845238192,
+      "p": 0.13333333333333333,
+      "r": 1.0
+    },
+    "@5": {
+      "hr": 1.0,
+      "ndcg": 0.8769765845238192,
+      "p": 0.26666666666666666,
+      "r": 1.0
+    },
+    "cold_start": {
+      "@10": null,
+      "@5": null
+    },
+    "coverage_catalog": 0.4166666666666667,
+    "coverage_user": 1.0,
+    "n_cold_users": 0,
+    "n_eval_users": 3,
+    "n_test_positives_filtered": 21
+  },
+  "hybrid": {
+    "@10": {
+      "hr": 1.0,
+      "ndcg": 1.0,
+      "p": 0.13333333333333333,
+      "r": 1.0
+    },
+    "@5": {
+      "hr": 1.0,
+      "ndcg": 1.0,
+      "p": 0.26666666666666666,
+      "r": 1.0
+    },
+    "cold_start": {
+      "@10": null,
+      "@5": null
+    },
+    "coverage_catalog": 0.4166666666666667,
+    "coverage_user": 1.0,
+    "n_cold_users": 0,
+    "n_eval_users": 3,
+    "n_test_positives_filtered": 21
+  },
+  "popularity": {
+    "@10": {
+      "hr": 1.0,
+      "ndcg": 1.0,
+      "p": 0.13333333333333333,
+      "r": 1.0
+    },
+    "@5": {
+      "hr": 1.0,
+      "ndcg": 1.0,
+      "p": 0.26666666666666666,
+      "r": 1.0
+    },
+    "cold_start": {
+      "@10": null,
+      "@5": null
+    },
+    "coverage_catalog": 0.4166666666666667,
+    "coverage_user": 1.0,
+    "n_cold_users": 0,
+    "n_eval_users": 3,
+    "n_test_positives_filtered": 21
+  }
+}

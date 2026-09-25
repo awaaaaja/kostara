@@ -2,7 +2,7 @@
 
 Status: **active di produksi dev** · Nama model: `hybrid`
 Model version: `c626ac15-ca09-4dde-b512-94ae0377c401` (lihat `model_versions`)
-Dataset: `ebc8e8e3cadecd7d` · Seed: 42 · Run: `experiments/recommendation/runs/20260925T065411Z`
+Dataset: `ebc8e8e3cadecd7d` · Seed: 42 · Run: `experiments/recommendation/runs/20260925T170952Z`
 
 ## 1. Sumber data & legalitas
 
