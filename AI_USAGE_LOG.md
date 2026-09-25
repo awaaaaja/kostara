@@ -224,3 +224,24 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Risiko/keterbatasan: hanya 2 district terpakai di seed; 40 baris = dev
   seed, bukan data operasional; feature §7 tanpa subdistrict/travel_time
   (gap V1 terdokumentasi di DQ-11)
+
+## 2026-09-26 — Phase B penuh: unduhan AirROI + kartu dataset + provenance
+- Tujuan: melengkapi gate DATA PASS (ML_PRICE_INTELLIGENCE §27 Phase B)
+  dengan unduhan resmi terverifikasi dan dokumentasi legalitas
+- Bagian yang dibantu: menulis `experiments/price/download_airroi.py`
+  (unduh+pin checksum+verify), `experiments/price/DATASET_CARD.md`
+  (statistik dihitung dari file), `docs/DATA_PROVENANCE.md`, entri LOGBOOK
+- File/artefak terdampak: experiments/price/{download_airroi.py,
+  DATASET_CARD.md} (baru), docs/DATA_PROVENANCE.md (baru), .gitignore
+  (+kaggle.json), LOGBOOK.md, AI_USAGE_LOG.md; data/raw/price/public/
+  airroi_apac/ (gitignored, 4 file + source_metadata.json +
+  dataset-metadata.json)
+- Cara verifikasi: download ulang end-to-end → sha256 cocok 4/4;
+  statistik (272 corrupt, 11 dup, rasio mata uang) dihitung ulang dari
+  parquet; `kaggle.json` terbukti ter-ignore (`git check-ignore`)
+- Perubahan manual setelah output AI: keputusan CC BY-NC = dev-only
+  namespace & larangan komersialisasi data; target benchmark dipilih
+  `ttm_avg_rate` (USD); typo nama file diperbaiki manual
+- Risiko/keterbatasan: data corrupt upstream harus dibuang di Phase C
+  (dokumentasikan jumlah); 0 baris Padang → benchmark hanya mengukur
+  pipeline, bukan kualitas model domain KOSTARA

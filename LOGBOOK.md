@@ -200,3 +200,24 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
 - Bukti: export+validate hijau · scan secret+emoji bersih
 - Belum: unduh AirROI (butuh Kaggle creds — stop-and-ask), dataset card
   benchmark, inspeksi schema AirROI → gate DATA PASS penuh tertahan
+
+## 2026-09-26 — Price Intelligence: Phase B penuh — gate DATA PASS
+- Status: **DATA PASS** — unduhan benchmark resmi + kartu dataset +
+  provenance selesai (lokal sudah PASS sejak 25 Sep)
+- `experiments/price/download_airroi.py`: unduh resmi Kaggle
+  `jasonairroi/airbnb-market-data-asia-pacific` (22,4 MB; listings 29.440
+  + past_rates 341.367), **sha256 4 file terpinned** + `--verify`
+  (end-to-end rerun identik); kredensial di `~/.kaggle/` saja —
+  `kaggle.json` masuk `.gitignore` (file dari owner direstui lokal)
+- Inspeksi schema (dihitung, bukan klaim): semua kolom listings `str`;
+  `ttm_avg_rate` = USD (rasio native stabil per mata uang); 14 negara /
+  113 kota / Indonesia 2.747 / **Padang 0**; lisensi **CC BY-NC 4.0**
+- DQ nyata ditemukan & didokumentasi: **272 baris row-shift/corrupt**,
+  11 duplikat listing_id, lat null 394, bedrooms null 22,8% + junk 127,6,
+  `instant_book` null 87,6%, `room_type` campuran kanonik+jarang
+- `experiments/price/DATASET_CARD.md` (kartu benchmark, termasuk daftar
+  leakage `ttm_*`/`l90d_*`/`rating_*` dilarang jadi fitur) ·
+  `docs/DATA_PROVENANCE.md` (AirROI NC + districts WilayahBoundaries)
+- Bukti: `download_airroi.py --verify` OK 4/4 · scan secret+emoji bersih
+- Lanjut: Phase C validasi AirROI (cleaning wajib utk 272 baris corrupt)
+  → Phase D baseline (Geographic Median + Linear Regression)
