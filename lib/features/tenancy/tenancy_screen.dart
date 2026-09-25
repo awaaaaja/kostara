@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/util/payment_schedule.dart';
+import 'reminder_sync.dart';
 import 'tenancy_repository.dart';
 
 final _upcomingDuesProvider =
@@ -87,9 +89,21 @@ class TenancyScreen extends ConsumerWidget {
                             '${_fmtDate(t['start_date'])}'
                             '${t['end_date'] != null ? ' – ${_fmtDate(t['end_date'])}' : ''}',
                           ),
-                          trailing: Chip(
-                            visualDensity: VisualDensity.compact,
-                            label: Text('${t['status']}'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (t['status'] == 'ended')
+                                TextButton(
+                                  onPressed: () => context.push(
+                                    '/property/${t['property_id']}/review',
+                                  ),
+                                  child: const Text('Tulis ulasan'),
+                                ),
+                              Chip(
+                                visualDensity: VisualDensity.compact,
+                                label: Text('${t['status']}'),
+                              ),
+                            ],
                           ),
                         ),
                     ],
@@ -224,6 +238,9 @@ class _ActiveCard extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final id = tenancy['id'] as String;
     final dues = ref.watch(_upcomingDuesProvider(id));
+    // Resync pengingat server + lokal saat kartu sewa dibuka (ADR-006,
+    // AC-PAY-05) — best-effort, error provider tidak dirender di sini.
+    ref.watch(reminderSyncProvider(id));
     final schedule = (tenancy['payment_schedules'] as List?)
         ?.cast<Map<String, dynamic>>();
     final nextDue = schedule == null || schedule.isEmpty
@@ -266,42 +283,111 @@ class _ActiveCard extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 4),
-            Text(
-              nextDue == null
-                  ? 'Jadwal pembayaran menyusul'
-                  : 'Tagihan berikutnya ${fmt(nextDue)}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
+            // Kartu pembayaran (DESIGN §25): status efektif dihitung helper
+            // yang sama dengan home owner (AC-PAY-06).
             dues.when(
               loading: () => const LinearProgressIndicator(minHeight: 2),
-              error: (e, _) => const SizedBox.shrink(),
-              data: (list) => Column(
-                children: [
-                  for (final d in list)
-                    Row(
+              error: (e, _) => Text(
+                nextDue == null
+                    ? 'Jadwal pembayaran menyusul'
+                    : 'Tagihan berikutnya ${fmt(nextDue)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              data: (list) {
+                if (list.isEmpty) {
+                  return Text(
+                    'Semua tagihan lunas',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  );
+                }
+                final now = DateTime.now();
+                final next = list.first;
+                final due = parseDateOnly(next['due_date']);
+                final status = effectivePaymentStatus(
+                  '${next['status']}',
+                  due,
+                  now,
+                );
+                final overdue = status == 'overdue';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Jatuh tempo berikutnya',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      fmt(next['due_date']),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    Text(
+                      'Rp${next['amount']} · ${dueInLabel(due, now)}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Chip(
+                      visualDensity: VisualDensity.compact,
+                      backgroundColor: overdue ? scheme.error : scheme.tertiary,
+                      labelStyle: TextStyle(
+                        fontSize: 12,
+                        color: overdue ? scheme.onError : scheme.onTertiary,
+                      ),
+                      label: Text(paymentStatusLabel(status)),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
                       children: [
-                        Icon(
-                          d['status'] == 'paid'
-                              ? Icons.check_circle_outline
-                              : Icons.schedule,
-                          size: 16,
+                        OutlinedButton(
+                          onPressed: () =>
+                              context.push('/tenancy/$id/reminders'),
+                          child: const Text('Atur pengingat'),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '${fmt(d['due_date'])} · Rp${d['amount']}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                        Text(
-                          '${d['status']}' == 'paid' ? 'Lunas' : 'Belum',
-                          style: Theme.of(context).textTheme.labelMedium,
+                        OutlinedButton(
+                          onPressed: () =>
+                              context.push('/tenancy/$id/payments'),
+                          child: const Text('Lihat riwayat'),
                         ),
                       ],
                     ),
-                ],
-              ),
+                    const SizedBox(height: 4),
+                    for (final d in list.skip(1))
+                      Row(
+                        children: [
+                          Icon(
+                            effectivePaymentStatus(
+                                      '${d['status']}',
+                                      parseDateOnly(d['due_date']),
+                                      now,
+                                    ) ==
+                                    'overdue'
+                                ? Icons.warning_amber_outlined
+                                : Icons.schedule,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${fmt(d['due_date'])} · Rp${d['amount']}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                          Text(
+                            paymentStatusLabel(
+                              effectivePaymentStatus(
+                                '${d['status']}',
+                                parseDateOnly(d['due_date']),
+                                now,
+                              ),
+                            ),
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                        ],
+                      ),
+                  ],
+                );
+              },
             ),
           ],
         ),

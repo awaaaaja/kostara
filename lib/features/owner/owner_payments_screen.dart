@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/util/payment_schedule.dart';
 import 'owner_repository.dart';
 
 class OwnerPaymentsScreen extends ConsumerWidget {
@@ -113,31 +114,42 @@ class OwnerPaymentsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   for (final r in due)
-                    Card(
-                      elevation: 0,
-                      color: scheme.surfaceContainerLow,
-                      child: ListTile(
-                        leading: Icon(
-                          r['status'] == 'overdue'
-                              ? Icons.warning_amber_outlined
-                              : Icons.schedule,
-                          color: r['status'] == 'overdue'
-                              ? scheme.error
-                              : scheme.tertiary,
-                        ),
-                        title: Text(
-                          '${r['tenancy']?['property']?['name']} · '
-                          '${r['tenancy']?['room']?['code']}',
-                        ),
-                        subtitle: Text(
-                          '${_fmtDate(r['due_date'])} · Rp${r['amount']} · '
-                          '${r['tenancy']?['seeker']?['full_name'] ?? '—'}',
-                        ),
-                        trailing: FilledButton.tonal(
-                          onPressed: () => _markPaid(context, ref, r),
-                          child: const Text('Lunas'),
-                        ),
-                      ),
+                    Builder(
+                      builder: (context) {
+                        // Status efektif dihitung helper bersama (AC-PAY-06);
+                        // DB hanya menyimpan unpaid — overdue diturunkan.
+                        final status = effectivePaymentStatus(
+                          '${r['status']}',
+                          parseDateOnly(r['due_date']),
+                          DateTime.now(),
+                        );
+                        final overdue = status == 'overdue';
+                        return Card(
+                          elevation: 0,
+                          color: scheme.surfaceContainerLow,
+                          child: ListTile(
+                            leading: Icon(
+                              overdue
+                                  ? Icons.warning_amber_outlined
+                                  : Icons.schedule,
+                              color: overdue ? scheme.error : scheme.tertiary,
+                            ),
+                            title: Text(
+                              '${r['tenancy']?['property']?['name']} · '
+                              '${r['tenancy']?['room']?['code']}',
+                            ),
+                            subtitle: Text(
+                              '${_fmtDate(r['due_date'])} · Rp${r['amount']} · '
+                              '${paymentStatusLabel(status)} · '
+                              '${r['tenancy']?['seeker']?['full_name'] ?? '—'}',
+                            ),
+                            trailing: FilledButton.tonal(
+                              onPressed: () => _markPaid(context, ref, r),
+                              child: const Text('Lunas'),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                 ],
                 if (paid.isNotEmpty) ...[
