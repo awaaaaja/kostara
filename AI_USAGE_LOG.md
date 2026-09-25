@@ -97,3 +97,30 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Risiko/keterbatasan: demo on-device belum jalan (env tanpa JDK/Chrome);
   GPS JIT, font asset, email E2E ditunda ke CP-04A (R-021..R-023); dataset
   baseline sintetis kecil — angka bukan klaim performa (R-008/R-001/R-002)
+
+## 2026-09-25 — CP-04A Core Product Implementation (Sprint 5)
+- Tujuan: CP-04A — alur kritis register→onboarding→discover→map→detail→
+  save/compare→request→owner accept→sewa aktif; owner lifecycle; filter/map/
+  offline/foto; ToS+font; gate report tanpa mengarang bukti
+- Bagian yang dibantu: migration tenancy `…0008/0009` + `test_tenancy_flow.py`;
+  Flutter Batch A–E (event logger, feed, saved, compare, tenancy, 6 layar
+  owner, verifikasi upload, router/shell role-based, filter sheet, map
+  debounce/bbox/near-me/kampus, offline cache, foto listing); `docs/tos-v1.0.md`
+  + `tos_summary.dart`; bundling font; manifest izin lokasi; LOGBOOK,
+  RISK_REGISTER, gate report CP-04A
+- File/artefak terdampak: supabase/migrations/** (2 baru), scripts/**,
+  lib/** (hampir semua fitur baru/ubah), test/** (3 baru), pubspec.yaml,
+  android manifest, assets/fonts/**, docs/tos-v1.0.md,
+  docs/logs/CP-04A-gate-report.md, LOGBOOK.md, RISK_REGISTER.md
+- Cara verifikasi: flutter analyze (0) · flutter test 12/12 (termasuk 4
+  contract RPC anon nyata) · run_db_tests 22/22 · test_rls_matrix 53/53 ·
+  test_tenancy_flow 30/30 · probe REST (campuses EWKB, bbox dalam/luar,
+  guard tos_required, mailer_autoconfirm=false) · secret+emoji scan bersih —
+  semua angka dieksekusi di sesi ini
+- Perubahan manual setelah output AI: fix rooms_guard migration dibaca ulang
+  dari pola FSM asli (bukan tebakan); akurasi `hasGesture`/`visibleBounds`
+  diverifikasi dari sumber package flutter_map 8.3.2 lokal; penentuan scope
+  A5/A7/A8/A9/A12 parsial mengikuti backlog, bukan preferensi model
+- Risiko/keterbatasan: build/run on-device deferred (instruksi owner) → R-024;
+  teks ToS menunggu ok owner (R-017); mailbox E2E belum ada (R-023 parsial);
+  sweep breakpoint/text-scale butuh device (CP-05A)

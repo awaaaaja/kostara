@@ -73,3 +73,21 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   (cover_path/lat-lng, B11→CP-04A, GPS/font/email E2E tertunda) tercatat §6.
   Metrics baseline = data dev sintetis kecil → bukan klaim performa (R-008).
   Sprint 5 (CP-04A) AUTHORIZED.
+
+## 2026-09-25 — Sprint 5 / CP-04A Core Product Implementation
+- Status: **PASS** — gate report: `docs/logs/CP-04A-gate-report.md`
+- Bukti: 2 migration tenancy (submit/activate/end RPC + policy split
+  anti-TOCTOU; fix `rooms_guard` via `generate_subscripts`), Flutter Batch
+  A–E (feed rekomendasi, saved/compare ≤3, ajukan sewa → accept owner →
+  sewa aktif + jadwal bayar, owner lifecycle 6 layar + verifikasi upload,
+  router/shell role-based, filter sheet, peta debounce-300ms+bbox+near-me
+  JIT+marker kampus, offline cache+banner, foto listing), ToS v1.0 +
+  ringkasan in-app + tarik consent, font Plus Jakarta Sans dibundel (OFL)
+  — `flutter analyze` 0 · `flutter test` 12/12 (4 contract RPC nyata) ·
+  `run_db_tests` 22/22 · `test_rls_matrix` 53/53 ·
+  `test_tenancy_flow` 30/30 (baru) · secret+emoji scan bersih
+- Catatan: 5 masalah ditemukan & diperbaiki saat REVIEW (P0 rooms_guard
+  unnest/containment, P1 needle false-PASS, P1 manifest izin lokasi, 2 P1
+  analyzer). On-device build **deferred atas instruksi owner** ("build
+  nanti saja") → R-024; ToS draft final menunggu ok owner (R-017 mitigated
+  parsial); A5/A7/A8/A9-sisa → CP-04B. Sprint 6 (CP-04B) AUTHORIZED.
