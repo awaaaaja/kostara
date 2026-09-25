@@ -1,0 +1,107 @@
+{
+  "created_at": "2026-09-25T23:56:14+00:00",
+  "dataset": "jasonairroi/airbnb-market-data-asia-pacific",
+  "rows": {
+    "raw": 29440,
+    "after_cleaning": 29057,
+    "past_rates": 341367
+  },
+  "cleaning": {
+    "row_shift_removed": 383,
+    "duplicates_removed": 0
+  },
+  "price_distribution_usd": {
+    "n_null": 296,
+    "min": 7.5,
+    "p25": 35.7,
+    "median": 62.9,
+    "p75": 132.2,
+    "max": 3832.4
+  },
+  "missing_pct": {
+    "latitude": 1.0,
+    "longitude": 1.0,
+    "bedrooms": 22.7,
+    "guests": 15.4,
+    "min_nights": 2.7
+  },
+  "allowed_features": [
+    "room_type",
+    "latitude",
+    "longitude",
+    "guests",
+    "bedrooms",
+    "beds",
+    "baths",
+    "min_nights",
+    "cleaning_fee",
+    "extra_guest_fee",
+    "amenities_count",
+    "city",
+    "state",
+    "country"
+  ],
+  "checks": [
+    {
+      "id": "C-01 schema listings/past_rates sesuai harapan",
+      "status": "PASS",
+      "detail": "listings=61 past_rates=17"
+    },
+    {
+      "id": "C-02 semua kolom listings bertipe str (diketahui) — casting wajib",
+      "status": "PASS",
+      "detail": "non_str=[]"
+    },
+    {
+      "id": "C-03 duplikat diidentifikasi (raw 11) & bersih setelah cleaning",
+      "status": "PASS",
+      "detail": "raw=11 removed_in_cleaning=0"
+    },
+    {
+      "id": "C-04 baris row-shift/corrupt dibuang (URL + id non-angka)",
+      "status": "PASS",
+      "detail": "removed=383"
+    },
+    {
+      "id": "C-05 missing terdokumentasi (semua <30%)",
+      "status": "PASS",
+      "detail": "null%={'latitude': 1.0, 'longitude': 1.0, 'bedrooms': 22.7, 'guests': 15.4, 'min_nights': 2.7}"
+    },
+    {
+      "id": "C-06 target USD ada (>98%) & ekstrem tercatat",
+      "status": "PASS",
+      "detail": "dist={'n_null': 296, 'min': 7.5, 'p25': 35.7, 'median': 62.9, 'p75': 132.2, 'max': 3832.4} n_extreme=0"
+    },
+    {
+      "id": "C-07 koordinat terisi selalu dalam bbox APAC (null terpisah)",
+      "status": "PASS",
+      "detail": "out_of_bbox=1/28761 null=296"
+    },
+    {
+      "id": "C-08 room_type kanonik dominan + currency lengkap",
+      "status": "PASS",
+      "detail": "canon_share=0.990 n_currency=14"
+    },
+    {
+      "id": "C-09 kota/negara non-null (kunci property-group)",
+      "status": "PASS",
+      "detail": "city_null%=0.0"
+    },
+    {
+      "id": "C-10 property-group per kota ≤350 (klaim penerbit: up to 300)",
+      "status": "PASS",
+      "detail": "max=300 n_cities=113 over300=0"
+    },
+    {
+      "id": "C-11 past_rates: tanggal valid 2025-02..2026-01; orphan id <10%",
+      "status": "PASS",
+      "detail": "min=2025-02-01 max=2026-01-01 rows=341367 orphan_ids=0 (0.0%)"
+    },
+    {
+      "id": "C-12 fitur yang diizinkan bebas kolom terlarang (§7)",
+      "status": "PASS",
+      "detail": "allowed_overlap=[] forbidden_in_source=38 (dipakai hanya utk target/analisis)"
+    }
+  ],
+  "status": "QUALITY PASS"
+}

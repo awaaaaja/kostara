@@ -245,3 +245,22 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Risiko/keterbatasan: data corrupt upstream harus dibuang di Phase C
   (dokumentasikan jumlah); 0 baris Padang → benchmark hanya mengukur
   pipeline, bukan kualitas model domain KOSTARA
+
+## 2026-09-26 — Phase C validasi AirROI (validate_airroi.py)
+- Tujuan: memenuhi §27 Phase C (schema, duplikat, missing, distribusi
+  harga, geo, kategori, property-group, leakage audit) pada benchmark
+- Bagian yang dibantu: menulis validate_airroi.py (12 check + cleaning
+  terdokumentatif + dq_report), diagnosis 3 kegagalan awal, entri LOGBOOK
+- File/artefak terdampak: experiments/price/validate_airroi.py (baru),
+  experiments/price/runs/20260925T235425Z..235614Z/ (3 laporan),
+  LOGBOOK.md, AI_USAGE_LOG.md
+- Cara verifikasi: QUALITY PASS final (29.057 clean, orphan 0); angka
+  klaim penerbit vs aktual dihitung ulang dari parquet; laporan FAIL
+  pertama disimpan sebagai jejak, bukan dihapus
+- Perubahan manual setelah output AI: threshold C-10 (≤350, catat
+  pelanggaran klaim ≤300) dan pemisahan null-vs-out-of-bbox disepakati
+  sebagai keputusan validasi yang jujur; aturan korupsi listing_id
+  non-angka ditambahkan setelah inspeksi manual 6 baris
+- Risiko/keterbatasan: GroupKFold pada benchmark memakai group=kota
+  (1 baris/listing → group property degeneratif) — dicatat sebagai
+  deviasi terdokumentasi

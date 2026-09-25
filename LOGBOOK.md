@@ -221,3 +221,25 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
 - Bukti: `download_airroi.py --verify` OK 4/4 · scan secret+emoji bersih
 - Lanjut: Phase C validasi AirROI (cleaning wajib utk 272 baris corrupt)
   → Phase D baseline (Geographic Median + Linear Regression)
+
+## 2026-09-26 — Price Intelligence: Phase C validasi (QUALITY PASS ganda)
+- Status: **QUALITY PASS** — lokal (DQ-01..11, 25 Sep) + benchmark AirROI
+  (C-01..12, baru)
+- `experiments/price/validate_airroi.py`: cleaning terdokumentatif
+  (baris tidak dihapus dari raw) menemukan **383 baris korup** (272 URL
+  di room_type + 100+ listing_id non-angka — 3 "duplikat" sebenarnya
+  baris korup berjudul `# Sokcho Beach` dll), duplikat asli 11 →
+  setelah cleaning **29.057 baris = tepat jumlah listing di past_rates,
+  orphan 0** (sebelumnya 1.315)
+- Temuan jujur: klaim penerbit "up to 300/kota" dilanggar 17 kota
+  (301–311) **pada data mentah**; setelah cleaning korupsi → maks 300 ·
+  1 baris koordinat non-null di luar bbox APAC · target USD median 62,9
+  (p25–p75 35,7–132,2; ekstrem 7,5–3.832) · missing bedrooms 22,7% ·
+  leakage audit: 38 kolom `ttm_/l90d_/rating_` ada di sumber, daftar
+  fitur yang diizinkan bebas kontaminasi
+- Bug assertion awal (dedup dihitung sebelum/ sesudah, null geo dihitung
+  bad) diperbaiki sebelum PASS — bukan threshold yang dilonggarkan
+  agar lolos; 3 iterasi laporan tersimpan di runs/ (jejak audit)
+- Bukti: validate_airroi QUALITY PASS · validate_dataset QUALITY PASS ·
+  4 laporan di experiments/price/runs/
+- Lanjut: Phase D baseline (Geographic Median + Linear Regression)
