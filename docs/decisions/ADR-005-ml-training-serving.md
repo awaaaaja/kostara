@@ -47,3 +47,10 @@ realtime ditolak.
 ## Validation
 - TP-REC-01..05 (feed, reason, fallback, skor label, cold-start), TP-ML-01 (log).
 - CP-04B: run ulang seed sama → metrik identik (NFR-ML-01); model card.
+- Parity opsi C (2026-09-25): evaluator men-port formula SQL
+  `feed_recommendations` 1:1 (`tune_feed_weights.py`, selftest + double-run
+  deterministik) → val=tuning, test=pemilihan 3 kandidat → gate cp02-A8:
+  popularity terfilter menang di test (1.0 vs 0.877) → model aktif
+  diaktifkan ulang sbg `popularity` (w_trending=1.0); bobot hand tetap
+  di manifest. Evaluator meniru tie-break & filter serving; batas parity
+  tersisa (haversine vs PostGIS, popularity all-time) dicatat di MODEL_CARD §3b.

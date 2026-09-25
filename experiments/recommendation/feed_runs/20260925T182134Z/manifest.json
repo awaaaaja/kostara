@@ -1,0 +1,53 @@
+{
+  "evaluator": "sql_feed_parity",
+  "dataset_version": "ebc8e8e3cadecd7d",
+  "git_commit": "2cde66067e7405c00c1b8c35013c2b0af8c4659b",
+  "git_dirty": true,
+  "seed": 42,
+  "split": "temporal 70/10/20 (val=tuning, test=disevaluasi 1x)",
+  "grid": {
+    "step": 0.1,
+    "n_configs": 16807
+  },
+  "chosen_candidate": "sql_popularity",
+  "feed_params": {
+    "w_budget": 0.0,
+    "w_campus": 0.0,
+    "w_facility": 0.0,
+    "w_rating": 0.0,
+    "w_trending": 1.0
+  },
+  "candidates_params": {
+    "sql_popularity": {
+      "w_budget": 0.0,
+      "w_campus": 0.0,
+      "w_facility": 0.0,
+      "w_rating": 0.0,
+      "w_trending": 1.0
+    },
+    "sql_hand": {
+      "w_budget": 0.245,
+      "w_campus": 0.21,
+      "w_facility": 0.105,
+      "w_rating": 0.14,
+      "w_trending": 0.3
+    },
+    "sql_tuned": {
+      "w_budget": 0.245,
+      "w_campus": 0.21,
+      "w_facility": 0.105,
+      "w_rating": 0.14,
+      "w_trending": 0.3
+    }
+  },
+  "deterministic_rerun": true,
+  "parity_notes": [
+    "komponen/skor/tie-break SQL 1:1 (incl. filter available>0)",
+    "jarak haversine vs PostGIS geography (delta kecil, comp_campus)",
+    "popularity = hitungan train-only as-of (anti-leakage); serving SQL = all-time count (limitasi serving dicatat)",
+    "skor ranking 0-100 \u2014 BUKAN probabilitas (FR-REC-04)",
+    "evaluasi unit: dev seed sintetis \u2014 BUKAN production data"
+  ],
+  "data_note": "dataset dev sintetis seed \u2014 BUKAN production data",
+  "timestamp_utc": "20260925T182134Z"
+}

@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Aktivasi model rekomendasi terpilih (CP-04B) — idempoten.
+"""Aktivasi model rekomendasi terpilih — idempoten.
 
-Pemilihan berbasis evidence run terakhir (runs/*/metrics.json):
-kandidat dengan NDCG terbaik (tie-break: personalization > pure popularity)
-di-activate sebagai satu-satunya baris `status=active` per kind
-(unique index di DB menegakkan), model_params = mapping bobot SQL
-(ADR-005: skor feed = parameter SQL, bukan model terpisah).
+Sumber keputusan UTAMA (pasca parity opsi C): manifest terakhir
+`feed_runs/*` dari tune_feed_weights.py — evaluasi dengan formula SQL
+serving yang sama (val=tuning, test=pemilihan; gate CP-02 A8:
+kandidat hanya menang bila NDCG test ≥ baseline, coverage tak turun).
+model_versions.metrics = metrik test evaluator SQL-parity;
+model_params.params = bobot feed terpilih (ADR-005).
+
+Fallback (bila feed_runs kosong): run_baselines terakhir + PARAMS legacy
+CP-04B, dengan peringatan.
 
 Usage: python3 experiments/recommendation/activate_model.py [--dry-run]
 """
@@ -25,9 +29,7 @@ import run_sql  # noqa: E402
 SERVICE = run_sql.field("SERVICE_ROLE")
 SUPA = f"https://{run_sql.REF}.supabase.co"
 
-# Mapping hybrid (α=0.7 content / 0.3 popularity) → bobot feed SQL.
-# Signal family yang sama (budget/kampus/fasilitas/rating vs trending);
-# formula tidak identik — didokumentasikan di MODEL_CARD.md.
+# Fallback legacy CP-04B (hanya dipakai bila belum ada run SQL-parity).
 PARAMS = {
     "w_budget": 0.245,
     "w_campus": 0.21,
@@ -36,6 +38,9 @@ PARAMS = {
     "w_trending": 0.3,
     "hybrid_alpha": 0.7,
 }
+# Nama model_versions per kandidat evaluator SQL-parity.
+FEED_NAME = {"sql_popularity": "popularity", "sql_hand": "hybrid",
+             "sql_tuned": "hybrid"}
 
 
 def req(method: str, path: str, body=None) -> list | dict:
@@ -65,8 +70,7 @@ def latest_run() -> tuple[str, dict]:
 
 
 def pick(metrics: dict) -> str:
-    """NDCG@10 tertinggi; tie → kandidat dengan sinyal personalisasi
-    (hybrid > content > popularity) sesuai FR-ML-03 (popularity = fallback)."""
+    """[fallback] NDCG@10 tertinggi; tie → personalisasi > popularity."""
     best, name = -1.0, None
     for cand in ("hybrid", "content_based", "popularity"):
         n = metrics[cand]["@10"]["ndcg"]
@@ -75,27 +79,59 @@ def pick(metrics: dict) -> str:
     return name or "popularity"
 
 
+def feed_selection() -> dict | None:
+    """Pemilihan utama: manifest feed_runs terakhir (evaluator SQL-parity)."""
+    d = ROOT / "experiments/recommendation/feed_runs"
+    runs = sorted(p for p in d.iterdir()
+                  if (p / "manifest.json").exists()) if d.exists() else []
+    if not runs:
+        return None
+    run = runs[-1]
+    man = json.loads((run / "manifest.json").read_text())
+    if not man.get("deterministic_rerun"):
+        raise SystemExit("feed run terakhir belum lulus determinism")
+    met = json.loads((run / "metrics.json").read_text())
+    chosen = man["chosen_candidate"]
+    return {
+        "name": FEED_NAME[chosen],
+        "chosen_candidate": chosen,
+        "params": man["feed_params"],
+        "metrics": met["test"][chosen],
+        "artifact": f"experiments/recommendation/feed_runs/{run.name}",
+        "dataset_version": man["dataset_version"],
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    artifact, metrics = latest_run()
-    chosen = pick(metrics)
-    if chosen == "popularity":
-        print("catatan: kandidat menang = popularity (tanpa personalisasi)")
-    row = {
-        "kind": "recommender",
-        "name": chosen,
-        "artifact_uri": artifact,
-        "metrics": metrics[chosen],
-        "dataset_version": manifest_dataset(artifact),
-        "seed": 42,
-        "status": "active",
-    }
+    sel = feed_selection()
+    if sel:
+        chosen, params = sel["name"], sel["params"]
+        row = {"kind": "recommender", "name": chosen,
+               "artifact_uri": sel["artifact"], "metrics": sel["metrics"],
+               "dataset_version": sel["dataset_version"], "seed": 42,
+               "status": "active"}
+        source = f"sql-parity ({sel['chosen_candidate']})"
+        if chosen == "popularity":
+            print("catatan: menang = popularity terfilter (CP-02 A8; "
+                  "kandidat berbobot tidak mengalahkan baseline di test)")
+    else:
+        print("PERINGATAN: feed_runs kosong — fallback run_baselines + "
+              "PARAMS legacy CP-04B")
+        artifact, metrics = latest_run()
+        chosen, params = pick(metrics), PARAMS
+        row = {"kind": "recommender", "name": chosen, "artifact_uri": artifact,
+               "metrics": metrics[chosen],
+               "dataset_version": manifest_dataset(artifact), "seed": 42,
+               "status": "active"}
+        source = "legacy run_baselines"
+
     if args.dry_run:
-        print(json.dumps({"chosen": chosen, "row": row, "params": PARAMS},
-                         indent=2))
+        print(json.dumps({"source": source, "chosen": chosen, "row": row,
+                          "params": params}, indent=2))
         return
 
     # archive aktif lama (unique partial index hanya mengizinkan 1 active)
@@ -115,20 +151,24 @@ def main() -> None:
     else:
         mid = req("POST", "rest/v1/model_versions", row)[0]["id"]
 
-    # upsert params
+    # upsert params (hanya komponen yang dibaca SQL feed)
+    feed_keys = {k: params[k] for k in
+                 ("w_budget", "w_campus", "w_facility", "w_rating",
+                  "w_trending") if k in params}
     have = req("GET", f"rest/v1/model_params?model_version_id=eq.{mid}"
                       "&select=model_version_id")
     if have:
         req("PATCH", f"rest/v1/model_params?model_version_id=eq.{mid}",
-            {"params": PARAMS})
+            {"params": feed_keys})
     else:
         req("POST", "rest/v1/model_params",
-            {"model_version_id": mid, "params": PARAMS})
+            {"model_version_id": mid, "params": feed_keys})
 
     check = req("GET", "rest/v1/model_versions?kind=eq.recommender"
                        "&status=eq.active&select=name,dataset_version")
-    print(json.dumps({"activated": chosen, "model_version_id": mid,
-                      "active_now": check, "params": PARAMS}, indent=2))
+    print(json.dumps({"source": source, "activated": chosen,
+                      "model_version_id": mid, "active_now": check,
+                      "params": feed_keys}, indent=2))
 
 
 def manifest_dataset(artifact: str) -> str:
