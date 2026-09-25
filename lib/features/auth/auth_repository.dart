@@ -41,6 +41,30 @@ class AuthRepository {
   }
 
   Future<void> signOut() => _db.auth.signOut();
+
+  /// Hapus akun (PRD hapus akun): file milik sendiri dihapus dulu (best-effort,
+  /// policy izin pemilik), lalu RPC `delete_my_account` (tanpa tenancy aktif),
+  /// lalu signOut. Lempar error server agar UI menampilkan alasan spesifik.
+  Future<void> deleteAccount() async {
+    final uid = _db.auth.currentUser?.id;
+    if (uid == null) return;
+    for (final bucket in ['avatars', 'verification-documents-private']) {
+      try {
+        final entries = await _db.storage.from(bucket).list(path: uid);
+        final files = [
+          for (final e in entries)
+            if (e.id != null && e.name.isNotEmpty) '$uid/${e.name}',
+        ];
+        if (files.isNotEmpty) {
+          await _db.storage.from(bucket).remove(files);
+        }
+      } catch (_) {
+        // Best-effort: baris owner_profiles ikut terhapus oleh RPC.
+      }
+    }
+    await _db.rpc('delete_my_account');
+    await _db.auth.signOut();
+  }
 }
 
 final authRepositoryProvider = Provider<AuthRepository>(

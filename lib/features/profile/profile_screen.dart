@@ -158,10 +158,108 @@ class ProfileScreen extends ConsumerWidget {
                 icon: const Icon(Icons.logout),
                 label: const Text('Keluar'),
               ),
+              const SizedBox(height: 24),
+              _DeleteAccountSection(profileId: p.id),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+/// Zona berbahaya: hapus akun (anonymize + cabut sesi). Konfirmasi ganda;
+/// alasan server (mis. tenancy aktif) ditampilkan apa adanya.
+class _DeleteAccountSection extends ConsumerStatefulWidget {
+  const _DeleteAccountSection({required this.profileId});
+
+  final String profileId;
+
+  @override
+  ConsumerState<_DeleteAccountSection> createState() =>
+      _DeleteAccountSectionState();
+}
+
+class _DeleteAccountSectionState extends ConsumerState<_DeleteAccountSection> {
+  bool _busy = false;
+
+  Future<void> _delete() async {
+    if (_busy) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hapus akun?'),
+        content: const Text(
+          'Data pribadi akan dianonimkan, sesi keluar, dan kamu tidak bisa '
+          'masuk kembali. Riwayat interaksi tetap disimpan anonim. '
+          'Tindakan ini tidak dapat dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Hapus permanen'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(authRepositoryProvider).deleteAccount();
+      // signOut memicu redirect router ke /login.
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Akun berhasil dihapus.')),
+      );
+    } catch (e) {
+      final msg = '$e'.contains('tenancy_masih_aktif')
+          ? 'Masih ada sewa aktif — akun tidak dapat dihapus.'
+          : 'Gagal menghapus akun. Coba lagi.';
+      messenger.showSnackBar(SnackBar(content: Text(msg)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Divider(color: scheme.outlineVariant),
+        const SizedBox(height: 8),
+        Text(
+          'Zona berbahaya',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(color: scheme.error),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _busy ? null : _delete,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: scheme.error,
+            side: BorderSide(color: scheme.error),
+          ),
+          icon: _busy
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.delete_forever_outlined),
+          label: Text(_busy ? 'Menghapus…' : 'Hapus akun'),
+        ),
+      ],
     );
   }
 }
