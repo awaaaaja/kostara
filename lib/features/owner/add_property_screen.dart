@@ -1,26 +1,13 @@
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/util/ewkb.dart';
 import '../auth/auth_repository.dart';
-
-/// EWKB hex point (SRID 4326) — format yang diterima PostgREST untuk
-/// kolom geography (GeoJSON ditolak parser).
-String latLngToEwkbHex(double lat, double lng) {
-  final b = BytesBuilder();
-  b.addByte(1); // little endian
-  final type = ByteData(4)..setUint32(0, 0x20000001, Endian.little);
-  b.add(type.buffer.asUint8List());
-  final srid = ByteData(4)..setUint32(0, 4326, Endian.little);
-  b.add(srid.buffer.asUint8List());
-  final coords = ByteData(16)
-    ..setFloat64(0, lng, Endian.little)
-    ..setFloat64(8, lat, Endian.little);
-  b.add(coords.buffer.asUint8List());
-  return b.toBytes().map((e) => e.toRadixString(16).padLeft(2, '0')).join();
-}
+import 'owner_repository.dart';
 
 class AddPropertyScreen extends ConsumerStatefulWidget {
   const AddPropertyScreen({super.key});
@@ -37,6 +24,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
   final _lat = TextEditingController(text: '-0.92');
   final _lng = TextEditingController(text: '100.40');
   String _gender = 'any';
+  final _photos = <XFile>[];
   bool _busy = false;
   String? _message;
 
@@ -48,6 +36,18 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
     _lat.dispose();
     _lng.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhotos() async {
+    final picked = await ImagePicker().pickMultiImage(
+      imageQuality: 70,
+      maxWidth: 1600,
+    );
+    if (picked.isEmpty) return;
+    setState(() {
+      // Maksimal 8 foto per listing (hemat kuota bucket 5 MB/file).
+      _photos.addAll(picked.take(8 - _photos.length));
+    });
   }
 
   Future<void> _submit() async {
@@ -62,26 +62,43 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
       return;
     }
     try {
-      await Supabase.instance.client.from('properties').insert({
-        'owner_id': user.id,
-        'name': _name.text.trim(),
-        'address': _address.text.trim(),
-        'description': _description.text.trim().isEmpty
-            ? null
-            : _description.text.trim(),
-        'gender_policy': _gender,
-        'location': latLngToEwkbHex(
-          double.parse(_lat.text),
-          double.parse(_lng.text),
-        ),
-      });
+      final inserted = await Supabase.instance.client
+          .from('properties')
+          .insert({
+            'owner_id': user.id,
+            'name': _name.text.trim(),
+            'address': _address.text.trim(),
+            'description': _description.text.trim().isEmpty
+                ? null
+                : _description.text.trim(),
+            'gender_policy': _gender,
+            'location': latLngToEwkbHex(
+              double.parse(_lat.text),
+              double.parse(_lng.text),
+            ),
+          })
+          .select('id')
+          .single();
+      var photoNote = '';
+      if (_photos.isNotEmpty) {
+        try {
+          await ref.read(ownerRepositoryProvider).uploadPropertyPhotos(
+            inserted['id'] as String,
+            [for (final p in _photos) p.path],
+          );
+          _photos.clear();
+        } catch (_) {
+          photoNote = ' Foto gagal diunggah — tambahkan lewat kelola kos.';
+        }
+      }
       _formKey.currentState?.reset();
       setState(() {
         _name.clear();
         _address.clear();
         _description.clear();
         _message =
-            'Kos tersimpan. Listing aktif setelah diverifikasi super admin.';
+            'Kos tersimpan. Listing aktif setelah diverifikasi super '
+            'admin.$photoNote';
       });
     } catch (e) {
       setState(() => _message = 'Gagal menyimpan. Periksa data dan coba lagi.');
@@ -205,6 +222,58 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                     onSelectionChanged: (s) =>
                         setState(() => _gender = s.first),
                   ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Text(
+                        'Foto',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: _photos.length >= 8 ? null : _pickPhotos,
+                        icon: const Icon(Icons.add_photo_alternate_outlined),
+                        label: Text(_photos.isEmpty ? 'Tambah' : 'Tambah lagi'),
+                      ),
+                    ],
+                  ),
+                  if (_photos.isNotEmpty)
+                    SizedBox(
+                      height: 84,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _photos.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
+                        itemBuilder: (context, i) => Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                File(_photos[i].path),
+                                width: 84,
+                                height: 84,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: InkWell(
+                                onTap: () =>
+                                    setState(() => _photos.removeAt(i)),
+                                child: Icon(
+                                  Icons.cancel,
+                                  size: 20,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (_message != null) ...[
                     const SizedBox(height: 16),
                     Text(
