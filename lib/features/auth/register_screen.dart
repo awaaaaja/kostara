@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'auth_repository.dart';
+import 'tos_summary.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -148,6 +149,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 title: const Text('Saya setuju ToS & Kebijakan Privasi v1.0'),
+                subtitle: TextButton(
+                  onPressed: () => showTosSummarySheet(context),
+                  child: const Text('Baca ringkasan (wajib)'),
+                ),
                 onChanged: (v) => setState(() => _tos = v ?? false),
               ),
               CheckboxListTile(

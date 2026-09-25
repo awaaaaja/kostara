@@ -61,11 +61,15 @@ class AppProfile {
     required this.id,
     required this.role,
     required this.fullName,
+    this.tosVersion = '',
+    this.hasDataConsent = false,
   });
 
   final String id;
   final String role;
   final String fullName;
+  final String tosVersion;
+  final bool hasDataConsent;
 
   bool get isOwner => role == 'owner';
   bool get isAdmin => role == 'super_admin';
@@ -74,6 +78,8 @@ class AppProfile {
     id: json['id'] as String,
     role: json['role'] as String,
     fullName: json['full_name'] as String? ?? '',
+    tosVersion: json['tos_version'] as String? ?? '',
+    hasDataConsent: json['data_consent_at'] != null,
   );
 }
 
@@ -83,7 +89,7 @@ final currentProfileProvider = FutureProvider<AppProfile?>((ref) async {
   if (user == null) return null;
   final data = await Supabase.instance.client
       .from('profiles')
-      .select('id, role, full_name')
+      .select('id, role, full_name, tos_version, data_consent_at')
       .eq('id', user.id)
       .maybeSingle();
   return data == null ? null : AppProfile.fromJson(data);

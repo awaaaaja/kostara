@@ -7,10 +7,95 @@ import '../../features/discovery/discovery_providers.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 
 /// Navigasi utama + gate: auth (router), profil, onboarding seeker.
+/// Tab mengikuti role (DESIGN §11 seeker / §12 owner).
 class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.child});
 
   final Widget child;
+
+  static const _seekerTabs = [
+    (
+      icon: Icons.home_outlined,
+      selected: Icons.home,
+      label: 'Beranda',
+      path: '/home',
+    ),
+    (
+      icon: Icons.explore_outlined,
+      selected: Icons.explore,
+      label: 'Cari',
+      path: '/explore',
+    ),
+    (
+      icon: Icons.favorite_outline,
+      selected: Icons.favorite,
+      label: 'Tersimpan',
+      path: '/saved',
+    ),
+    (
+      icon: Icons.key_outlined,
+      selected: Icons.key,
+      label: 'Sewa',
+      path: '/tenancy',
+    ),
+    (
+      icon: Icons.person_outline,
+      selected: Icons.person,
+      label: 'Profil',
+      path: '/profile',
+    ),
+  ];
+
+  static const _ownerTabs = [
+    (
+      icon: Icons.dashboard_outlined,
+      selected: Icons.dashboard,
+      label: 'Ringkasan',
+      path: '/owner',
+    ),
+    (
+      icon: Icons.home_work_outlined,
+      selected: Icons.home_work,
+      label: 'Properti',
+      path: '/owner/properties',
+    ),
+    (
+      icon: Icons.groups_outlined,
+      selected: Icons.groups,
+      label: 'Penyewa',
+      path: '/owner/tenants',
+    ),
+    (
+      icon: Icons.receipt_long_outlined,
+      selected: Icons.receipt_long,
+      label: 'Bayar',
+      path: '/owner/payments',
+    ),
+    (
+      icon: Icons.person_outline,
+      selected: Icons.person,
+      label: 'Profil',
+      path: '/profile',
+    ),
+  ];
+
+  int _indexOf(String location, bool isOwner) {
+    if (isOwner) {
+      if (location.startsWith('/owner/properties') ||
+          location.startsWith('/owner/add')) {
+        return 1;
+      }
+      if (location.startsWith('/owner/tenants')) return 2;
+      if (location.startsWith('/owner/payments')) return 3;
+      if (location == '/profile') return 4;
+      return 0;
+    }
+    if (location == '/profile') return 4;
+    if (location == '/saved' || location == '/compare') return 3;
+    if (location == '/tenancy') return 2;
+    if (location == '/home') return 0;
+    return 1; // /explore, /map, /property/:id
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,8 +129,24 @@ class AppShell extends ConsumerWidget {
           );
         }
 
+        final location = GoRouterState.of(context).matchedLocation;
+
+        // Kendali pendaratan lintas role (profil baru diketahui setelah
+        // redirect router berjalan).
+        if (p.isOwner &&
+            (location == '/home' ||
+                location == '/saved' ||
+                location == '/tenancy')) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go('/owner');
+          });
+        } else if (!p.isOwner && location.startsWith('/owner')) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go('/home');
+          });
+        }
+
         var body = child;
-        var onboarded = true;
         if (!p.isOwner) {
           final prefs = ref.watch(hasPrefsProvider);
           body = prefs.when(
@@ -63,55 +164,29 @@ class AppShell extends ConsumerWidget {
                 ],
               ),
             ),
-            data: (has) {
-              if (has) return child;
-              onboarded = false;
-              return const OnboardingScreen();
-            },
+            data: (has) => has ? child : const OnboardingScreen(),
           );
-          if (!onboarded) {
+          if (body is OnboardingScreen) {
+            // Onboarding tanpa tab (alur satu langkah).
             return Scaffold(body: body);
           }
         }
 
-        final location = GoRouterState.of(context).matchedLocation;
-        final selectedIndex = switch (location) {
-          '/map' => 1,
-          '/owner/add' => 2,
-          _ => 0,
-        };
+        final tabs = p.isOwner ? _ownerTabs : _seekerTabs;
+        final selectedIndex = _indexOf(location, p.isOwner);
 
         return Scaffold(
           body: body,
           bottomNavigationBar: NavigationBar(
-            selectedIndex: selectedIndex < (p.isOwner ? 3 : 2)
-                ? selectedIndex
-                : 0,
-            onDestinationSelected: (i) {
-              if (i == 0) {
-                context.go('/explore');
-              } else if (i == 1) {
-                context.go('/map');
-              } else {
-                context.go('/owner/add');
-              }
-            },
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.explore_outlined),
-                selectedIcon: Icon(Icons.explore),
-                label: 'Cari kos',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.map_outlined),
-                selectedIcon: Icon(Icons.map),
-                label: 'Peta',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.add_business_outlined),
-                selectedIcon: Icon(Icons.add_business),
-                label: 'Kelola',
-              ),
+            selectedIndex: selectedIndex,
+            onDestinationSelected: (i) => context.go(tabs[i].path),
+            destinations: [
+              for (final t in tabs)
+                NavigationDestination(
+                  icon: Icon(t.icon),
+                  selectedIcon: Icon(t.selected),
+                  label: t.label,
+                ),
             ],
           ),
         );
