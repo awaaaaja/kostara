@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/events/event_logger.dart';
 import '../compare/compare_state.dart';
+import '../discovery/discovery_providers.dart';
 import '../discovery/discovery_repository.dart';
+import '../feedback/feedback_repository.dart';
 import '../saved/favorites_repository.dart';
 import '../tenancy/tenancy_repository.dart';
 import '../auth/auth_repository.dart';
@@ -21,11 +24,6 @@ final _detailProvider = FutureProvider.family<Map<String, dynamic>, String>((
 final _roomsProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>(
       (ref, id) => ref.watch(discoveryProvider).propertyRooms(id),
-    );
-
-final _reviewsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, String>(
-      (ref, id) => ref.watch(discoveryProvider).propertyReviews(id),
     );
 
 class PropertyDetailScreen extends ConsumerWidget {
@@ -55,7 +53,7 @@ class PropertyDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(_detailProvider(propertyId));
     final rooms = ref.watch(_roomsProvider(propertyId));
-    final reviews = ref.watch(_reviewsProvider(propertyId));
+    final reviews = ref.watch(propertyDetailReviewsProvider(propertyId));
     final favoriteIds = ref.watch(favoriteIdsProvider).valueOrNull ?? const [];
     final compareIds = ref.watch(compareIdsProvider);
     final profile = ref.watch(currentProfileProvider).valueOrNull;
@@ -270,9 +268,23 @@ class PropertyDetailScreen extends ConsumerWidget {
                             ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'Ulasan terverifikasi',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Ulasan terverifikasi',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        if (profile != null &&
+                            !profile.isOwner &&
+                            !profile.isAdmin)
+                          TextButton(
+                            onPressed: () =>
+                                context.push('/property/$propertyId/review'),
+                            child: const Text('Tulis ulasan'),
+                          ),
+                      ],
                     ),
                     reviews.when(
                       loading: () => const Padding(
@@ -280,26 +292,42 @@ class PropertyDetailScreen extends ConsumerWidget {
                         child: LinearProgressIndicator(),
                       ),
                       error: (e, _) => const Text('Gagal memuat ulasan.'),
-                      data: (list) => list.isEmpty
-                          ? const Text('Belum ada ulasan.')
-                          : Column(
-                              children: [
-                                for (final r in list)
-                                  ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    leading: Icon(
-                                      Icons.star_rounded,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    ),
-                                    title: Text(
-                                      'Rating ${r['rating_overall']}',
-                                    ),
-                                    subtitle: Text('${r['review_text'] ?? ''}'),
-                                  ),
-                              ],
+                      data: (list) {
+                        if (list.isEmpty) {
+                          return const Text('Belum ada ulasan.');
+                        }
+                        final avg =
+                            list
+                                .map(
+                                  (r) =>
+                                      (r['rating_overall'] as num).toDouble(),
+                                )
+                                .reduce((a, b) => a + b) /
+                            list.length;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${avg.toStringAsFixed(1)} dari 5 · '
+                              '${list.length} ulasan',
+                              style: Theme.of(context).textTheme.labelMedium,
                             ),
+                            const SizedBox(height: 4),
+                            for (final r in list)
+                              _ReviewItem(review: r, propertyId: propertyId),
+                            TextButton.icon(
+                              onPressed: () => _showReportDialog(
+                                context,
+                                ref,
+                                targetType: 'property',
+                                targetId: propertyId,
+                              ),
+                              icon: const Icon(Icons.flag_outlined, size: 18),
+                              label: const Text('Laporkan listing ini'),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -376,4 +404,176 @@ class PropertyDetailScreen extends ConsumerWidget {
     'female_only' => 'Putri',
     _ => 'Campur',
   };
+}
+
+/// Satu review publik: tanpa identitas penuh (AC-REV-06) — hanya label
+/// "Penghuni terverifikasi • Bulan Tahun" + skor aspek + aksi laporkan.
+class _ReviewItem extends ConsumerWidget {
+  const _ReviewItem({required this.review, required this.propertyId});
+
+  final Map<String, dynamic> review;
+  final String propertyId;
+
+  static const _months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
+
+  String get _monYear {
+    final d = DateTime.tryParse('${review['created_at']}');
+    if (d == null) return '';
+    final local = d.toLocal();
+    return '${_months[local.month - 1]} ${local.year}';
+  }
+
+  String get _aspectLine {
+    final scores = (review['review_aspect_scores'] as List?) ?? const [];
+    if (scores.isEmpty) return '';
+    final labels = {for (final (k, v) in kReviewAspects) k: v};
+    return scores
+        .map((s) {
+          final m = s as Map<String, dynamic>;
+          final label = labels['${m['aspect']}'] ?? '${m['aspect']}';
+          return '$label ${m['score'] ?? '—'}';
+        })
+        .join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final text = '${review['review_text'] ?? ''}';
+    final aspects = _aspectLine;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        Icons.star_rounded,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      title: Text(
+        'Penghuni terverifikasi • $_monYear',
+        style: Theme.of(context).textTheme.labelMedium,
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (text.isNotEmpty) Text(text),
+          if (aspects.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                aspects,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ),
+        ],
+      ),
+      trailing: PopupMenuButton<String>(
+        tooltip: 'Opsi review',
+        onSelected: (reason) => _showReportDialog(
+          context,
+          ref,
+          targetType: 'review',
+          targetId: '${review['id']}',
+          presetReason: reason,
+        ),
+        itemBuilder: (_) => [
+          for (final (code, label) in kReportReasons)
+            PopupMenuItem(value: code, child: Text('Laporkan: $label')),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dialog laporan (review/listing) — alasan + detail opsional (FR-ADM laporan).
+Future<void> _showReportDialog(
+  BuildContext context,
+  WidgetRef ref, {
+  required String targetType,
+  required String targetId,
+  String? presetReason,
+}) async {
+  var reason = presetReason ?? kReportReasons.first.$1;
+  final detailCtrl = TextEditingController();
+  final messenger = ScaffoldMessenger.of(context);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setDialogState) => AlertDialog(
+        title: Text(
+          targetType == 'review' ? 'Laporkan ulasan' : 'Laporkan listing',
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioGroup<String>(
+              groupValue: reason,
+              onChanged: (v) => setDialogState(() => reason = v ?? reason),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final (code, label) in kReportReasons)
+                    RadioListTile<String>(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text(label),
+                      value: code,
+                    ),
+                ],
+              ),
+            ),
+            TextField(
+              controller: detailCtrl,
+              maxLines: 2,
+              maxLength: 300,
+              decoration: const InputDecoration(
+                hintText: 'Keterangan tambahan (opsional)',
+                counterText: '',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Kirim laporan'),
+          ),
+        ],
+      ),
+    ),
+  );
+  try {
+    if (ok != true) return;
+    await ref
+        .read(feedbackRepositoryProvider)
+        .submitReport(
+          targetType: targetType,
+          targetId: targetId,
+          reasonCode: reason,
+          detail: detailCtrl.text,
+        );
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Laporan terkirim. Terima kasih.')),
+    );
+  } catch (_) {
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Gagal mengirim laporan. Coba lagi.')),
+    );
+  } finally {
+    detailCtrl.dispose();
+  }
 }

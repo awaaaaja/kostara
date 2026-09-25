@@ -150,7 +150,10 @@ class DiscoveryRepository {
   Future<List<Map<String, dynamic>>> propertyReviews(String id) async {
     final data = await _db
         .from('reviews')
-        .select('id, rating_overall, review_text, created_at, status')
+        .select('''
+          id, rating_overall, review_text, created_at, status,
+          review_aspect_scores(aspect, score, sentiment)
+        ''')
         .eq('property_id', id)
         .eq('status', 'approved')
         .order('created_at', ascending: false)

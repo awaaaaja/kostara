@@ -254,3 +254,10 @@ final hasPrefsProvider = FutureProvider<bool>((ref) async {
       .maybeSingle();
   return row != null;
 });
+
+/// Review approved untuk detail property (publik, AC-REV-05) — dipakai
+/// layar detail dan di-refresh setelah submit review.
+final propertyDetailReviewsProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>(
+      (ref, id) => ref.watch(discoveryProvider).propertyReviews(id),
+    );

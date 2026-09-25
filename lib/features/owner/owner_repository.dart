@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/util/payment_schedule.dart';
+
 /// Akses data owner: dashboard, properti/kamar, permintaan, pembayaran,
 /// verifikasi dokumen. Semua dibatasi RLS `fn_owns_property`/`fn_is_tenancy_owner`.
 class OwnerRepository {
@@ -21,18 +23,57 @@ class OwnerRepository {
         .from('tenancy_requests')
         .select('id')
         .eq('status', 'pending');
-    final unpaid = await _db
+    final dues = await _db
         .from('payment_records')
-        .select('id')
-        .eq('status', 'unpaid');
+        .select('id, due_date, amount, status');
+    // Helper yang sama dengan home seeker (AC-PAY-06) → angka identik.
+    final summary = PaymentSummary.fromRows(dues, DateTime.now());
     return {
       'properties_total': props.length,
       'properties_active': props
           .where((p) => p['listing_status'] == 'active')
           .length,
       'requests_pending': pending.length,
-      'payments_unpaid': unpaid.length,
+      'payments_unpaid': summary.unpaidCount,
+      'payments_overdue': summary.overdueCount,
     };
+  }
+
+  /// Insight feedback (DESIGN §31): rata-rata skor aspek dari review
+  /// approved di properti milik owner. `null` bila < 3 review — klaim
+  /// tanpa minimum evidence dilarang (DESIGN §31).
+  Future<FeedbackInsight?> feedbackInsight() async {
+    final props = await _db
+        .from('properties')
+        .select('id')
+        .eq('owner_id', _uid);
+    if (props.isEmpty) return null;
+    final ids = props.map((p) => '${p['id']}').toList();
+    final reviews = await _db
+        .from('reviews')
+        .select('id')
+        .eq('status', 'approved')
+        .inFilter('property_id', ids);
+    if (reviews.length < 3) return null;
+    final scores = await _db
+        .from('review_aspect_scores')
+        .select('aspect, score')
+        .inFilter('review_id', reviews.map((r) => '${r['id']}').toList())
+        .eq('source', 'manual');
+    final sums = <String, double>{};
+    final counts = <String, int>{};
+    for (final s in scores) {
+      final score = (s['score'] as num?)?.toDouble();
+      if (score == null) continue;
+      final aspect = '${s['aspect']}';
+      sums[aspect] = (sums[aspect] ?? 0) + score;
+      counts[aspect] = (counts[aspect] ?? 0) + 1;
+    }
+    final avgs = [
+      for (final e in sums.entries) (e.key, e.value / counts[e.key]!),
+    ]..sort((a, b) => b.$2.compareTo(a.$2));
+    if (avgs.isEmpty) return null;
+    return FeedbackInsight(reviewCount: reviews.length, aspects: avgs);
   }
 
   Future<List<Map<String, dynamic>>> myProperties() async {
@@ -246,6 +287,18 @@ class OwnerRepository {
 
 final ownerRepositoryProvider = Provider<OwnerRepository>(
   (ref) => OwnerRepository(Supabase.instance.client),
+);
+
+/// Rata-rata skor aspek per key, terurut desc; `null` = sample terlalu kecil.
+class FeedbackInsight {
+  const FeedbackInsight({required this.reviewCount, required this.aspects});
+
+  final int reviewCount;
+  final List<(String, double)> aspects;
+}
+
+final ownerFeedbackInsightProvider = FutureProvider<FeedbackInsight?>(
+  (ref) => ref.watch(ownerRepositoryProvider).feedbackInsight(),
 );
 
 final ownerDashboardProvider = FutureProvider<Map<String, int>>(

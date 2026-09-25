@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../feedback/feedback_repository.dart';
 import 'owner_repository.dart';
 
 class OwnerDashboardScreen extends ConsumerWidget {
@@ -11,6 +12,7 @@ class OwnerDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dash = ref.watch(ownerDashboardProvider);
     final pending = ref.watch(ownerPendingRequestsProvider);
+    final insight = ref.watch(ownerFeedbackInsightProvider);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -19,6 +21,7 @@ class OwnerDashboardScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(ownerDashboardProvider);
           ref.invalidate(ownerPendingRequestsProvider);
+          ref.invalidate(ownerFeedbackInsightProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -63,12 +66,77 @@ class OwnerDashboardScreen extends ConsumerWidget {
                   _Metric(
                     label: 'Tagihan belum lunas',
                     value: '${d['payments_unpaid']}',
-                    sub: 'periksa pembayaran',
+                    // Angka identik dengan home seeker (AC-PAY-06) —
+                    // helper PaymentSummary yang sama.
+                    sub: (d['payments_overdue'] ?? 0) > 0
+                        ? '${d['payments_overdue']} terlambat'
+                        : 'periksa pembayaran',
                     icon: Icons.receipt_long_outlined,
                     color: scheme.error,
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Feedback penghuni',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            insight.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(8),
+                child: LinearProgressIndicator(),
+              ),
+              error: (e, _) => const Text(
+                'Gagal memuat ringkasan feedback.',
+                style: TextStyle(fontSize: 13),
+              ),
+              data: (i) {
+                if (i == null) {
+                  return const Text(
+                    'Belum cukup feedback untuk membuat ringkasan.',
+                    style: TextStyle(fontSize: 13),
+                  );
+                }
+                final labels = {for (final (k, v) in kReviewAspects) k: v};
+                final top = i.aspects.take(2);
+                final bottom = i.aspects.reversed.take(2);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Yang paling disukai',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    for (final (k, avg) in top)
+                      Text(
+                        '${labels[k] ?? k} · ${avg.toStringAsFixed(1)}/5',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Perlu perhatian',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    for (final (k, avg) in bottom)
+                      Text(
+                        '${labels[k] ?? k} · ${avg.toStringAsFixed(1)}/5',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Aspect breakdown (${i.reviewCount} ulasan)',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    for (final (k, avg) in i.aspects)
+                      Text(
+                        '${labels[k] ?? k} — ${avg.toStringAsFixed(1)}/5',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 20),
             Row(
