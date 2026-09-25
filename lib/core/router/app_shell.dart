@@ -6,6 +6,14 @@ import '../../features/auth/auth_repository.dart';
 import '../../features/discovery/discovery_providers.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 
+/// Tab seeker yang tidak relevan untuk pendaratan admin (router juga
+/// mengarahkan; sini untuk kasus profil baru diketahui).
+bool _isSeekerPath(String location) =>
+    location == '/home' ||
+    location == '/saved' ||
+    location == '/tenancy' ||
+    location == '/compare';
+
 /// Navigasi utama + gate: auth (router), profil, onboarding seeker.
 /// Tab mengikuti role (DESIGN §11 seeker / §12 owner).
 class AppShell extends ConsumerWidget {
@@ -79,7 +87,40 @@ class AppShell extends ConsumerWidget {
     ),
   ];
 
-  int _indexOf(String location, bool isOwner) {
+  static const _adminTabs = [
+    (
+      icon: Icons.dashboard_outlined,
+      selected: Icons.dashboard,
+      label: 'Ringkasan',
+      path: '/admin',
+    ),
+    (
+      icon: Icons.verified_user_outlined,
+      selected: Icons.verified_user,
+      label: 'Verifikasi',
+      path: '/admin/verify',
+    ),
+    (
+      icon: Icons.rule_outlined,
+      selected: Icons.rule,
+      label: 'Moderasi',
+      path: '/admin/moderation',
+    ),
+    (
+      icon: Icons.storage_outlined,
+      selected: Icons.storage,
+      label: 'Data',
+      path: '/admin/master',
+    ),
+  ];
+
+  int _indexOf(String location, bool isOwner, bool isAdmin) {
+    if (isAdmin) {
+      if (location.startsWith('/admin/verify')) return 1;
+      if (location.startsWith('/admin/moderation')) return 2;
+      if (location.startsWith('/admin/master')) return 3;
+      return 0;
+    }
     if (isOwner) {
       if (location.startsWith('/owner/properties') ||
           location.startsWith('/owner/add')) {
@@ -133,7 +174,15 @@ class AppShell extends ConsumerWidget {
 
         // Kendali pendaratan lintas role (profil baru diketahui setelah
         // redirect router berjalan).
-        if (p.isOwner &&
+        if (p.isAdmin && _isSeekerPath(location)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go('/admin');
+          });
+        } else if (!p.isAdmin && location.startsWith('/admin')) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go(p.isOwner ? '/owner' : '/home');
+          });
+        } else if (p.isOwner &&
             (location == '/home' ||
                 location == '/saved' ||
                 location == '/tenancy')) {
@@ -142,12 +191,12 @@ class AppShell extends ConsumerWidget {
           });
         } else if (!p.isOwner && location.startsWith('/owner')) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) context.go('/home');
+            if (context.mounted) context.go(p.isAdmin ? '/admin' : '/home');
           });
         }
 
         var body = child;
-        if (!p.isOwner) {
+        if (!p.isOwner && !p.isAdmin) {
           final prefs = ref.watch(hasPrefsProvider);
           body = prefs.when(
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -172,8 +221,10 @@ class AppShell extends ConsumerWidget {
           }
         }
 
-        final tabs = p.isOwner ? _ownerTabs : _seekerTabs;
-        final selectedIndex = _indexOf(location, p.isOwner);
+        final tabs = p.isAdmin
+            ? _adminTabs
+            : (p.isOwner ? _ownerTabs : _seekerTabs);
+        final selectedIndex = _indexOf(location, p.isOwner, p.isAdmin);
 
         return Scaffold(
           body: body,
