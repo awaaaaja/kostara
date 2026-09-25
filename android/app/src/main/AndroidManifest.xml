@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Near me (FR-MAP-03): izin lokasi HANYA diminta runtime saat tombol
+         ditekan (just-in-time); tidak ada background location. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="kostara"
         android:name="${applicationName}"

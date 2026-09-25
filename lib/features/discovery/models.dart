@@ -54,6 +54,22 @@ class PropertySummary {
         lat: (json['lat'] as num?)?.toDouble(),
         lng: (json['lng'] as num?)?.toDouble(),
       );
+
+  /// Serialisasi cache offline (AC-OFF-01) — simetris dengan [fromJson].
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'price_from': priceFrom,
+    'cover_path': coverPath,
+    'rating_avg': ratingAvg,
+    'rating_count': ratingCount,
+    'distance_m': distanceM,
+    'availability': availability,
+    'gender_policy': genderPolicy,
+    'facilities': facilities,
+    'lat': lat,
+    'lng': lng,
+  };
 }
 
 class SearchResult {
@@ -62,12 +78,17 @@ class SearchResult {
     required this.page,
     required this.pageSize,
     required this.hasMore,
+    this.fromCache = false,
   });
 
   final List<PropertySummary> items;
   final int page;
   final int pageSize;
   final bool hasMore;
+
+  /// True bila disajikan dari cache lokal (koneksi bermasalah) — banner
+  /// offline di UI (AC-OFF-01).
+  final bool fromCache;
 
   factory SearchResult.fromJson(Map<String, dynamic> json) => SearchResult(
     items: ((json['items'] as List?) ?? const [])
@@ -80,15 +101,27 @@ class SearchResult {
 }
 
 class Campus {
-  const Campus({required this.id, required this.name, this.locationLabel = ''});
+  const Campus({
+    required this.id,
+    required this.name,
+    this.locationLabel = '',
+    this.lat,
+    this.lng,
+  });
 
   final String id;
   final String name;
   final String locationLabel;
+  final double? lat;
+  final double? lng;
+
+  bool get hasLocation => lat != null && lng != null;
 
   factory Campus.fromJson(Map<String, dynamic> json) => Campus(
     id: json['id'] as String,
     name: json['name'] as String,
     locationLabel: json['location_label'] as String? ?? '',
+    lat: (json['lat'] as num?)?.toDouble(),
+    lng: (json['lng'] as num?)?.toDouble(),
   );
 }

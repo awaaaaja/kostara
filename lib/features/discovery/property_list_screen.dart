@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../discovery/discovery_providers.dart';
 import '../discovery/models.dart';
+import '../discovery/property_card.dart';
 
 class PropertyListScreen extends ConsumerStatefulWidget {
   const PropertyListScreen({super.key});
@@ -16,6 +17,9 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
   final _query = TextEditingController();
   Campus? _campus;
 
+  /// Filter tambahan dari sheet (allow-list key cp03a §2).
+  Map<String, dynamic> _extra = const {'available_only': true};
+
   @override
   void dispose() {
     _query.dispose();
@@ -23,13 +27,37 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
   }
 
   void _applyFilters() {
-    final filters = <String, dynamic>{'available_only': true};
+    final filters = <String, dynamic>{..._extra};
     if (_query.text.trim().isNotEmpty) filters['q'] = _query.text.trim();
     if (_campus != null) {
       filters['campus_id'] = _campus!.id;
       filters['max_distance_m'] = 3000;
     }
     ref.read(searchFiltersProvider.notifier).state = filters;
+  }
+
+  Future<void> _openFilterSheet() async {
+    final applied = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _FilterSheet(initial: _extra),
+    );
+    if (applied != null) {
+      setState(() => _extra = applied);
+      _applyFilters();
+    }
+  }
+
+  int get _activeFilterCount {
+    var n = 0;
+    if (_extra.containsKey('price_min') || _extra.containsKey('price_max')) {
+      n++;
+    }
+    if (_extra.containsKey('gender')) n++;
+    if (_extra.containsKey('room_types')) n++;
+    if (_extra.containsKey('rating_min')) n++;
+    if (_extra['available_only'] == false) n++;
+    return n;
   }
 
   @override
@@ -39,7 +67,25 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
     final sort = ref.watch(searchSortProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cari kos')),
+      appBar: AppBar(
+        title: const Text('Cari kos'),
+        actions: [
+          IconButton(
+            tooltip: 'Filter',
+            icon: Badge(
+              isLabelVisible: _activeFilterCount > 0,
+              label: Text('$_activeFilterCount'),
+              child: const Icon(Icons.tune),
+            ),
+            onPressed: _openFilterSheet,
+          ),
+          IconButton(
+            tooltip: 'Lihat di peta',
+            icon: const Icon(Icons.map_outlined),
+            onPressed: () => context.push('/map'),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -154,10 +200,19 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  itemCount: data.items.length + (data.hasMore ? 1 : 0),
+                  itemCount:
+                      data.items.length +
+                      (data.hasMore ? 1 : 0) +
+                      (data.fromCache ? 1 : 0),
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, i) {
-                    if (i == data.items.length) {
+                    if (data.fromCache && i == 0) {
+                      return _OfflineBanner(
+                        onRetry: () => ref.invalidate(searchResultProvider),
+                      );
+                    }
+                    final idx = data.fromCache ? i - 1 : i;
+                    if (idx == data.items.length) {
                       return Center(
                         child: TextButton.icon(
                           onPressed: () async {
@@ -182,10 +237,10 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
                         ),
                       );
                     }
-                    return _PropertyCard(
-                      property: data.items[i],
+                    return PropertyCard(
+                      property: data.items[idx],
                       onTap: () =>
-                          context.push('/property/${data.items[i].id}'),
+                          context.push('/property/${data.items[idx].id}'),
                     );
                   },
                 );
@@ -193,105 +248,6 @@ class _PropertyListScreenState extends ConsumerState<PropertyListScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PropertyCard extends StatelessWidget {
-  const _PropertyCard({required this.property, this.onTap});
-
-  final PropertySummary property;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final price = property.priceFrom;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      color: scheme.surfaceContainerLow,
-      child: InkWell(
-        onTap: onTap,
-        child: Row(
-          children: [
-            SizedBox(
-              width: 112,
-              height: 112,
-              child: property.coverUrl == null
-                  ? ColoredBox(
-                      color: scheme.surfaceContainerHighest,
-                      child: const Icon(Icons.home_outlined),
-                    )
-                  : Image.network(
-                      property.coverUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => ColoredBox(
-                        color: scheme.surfaceContainerHighest,
-                        child: const Icon(Icons.broken_image_outlined),
-                      ),
-                    ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      property.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      price == null
-                          ? 'Harga menyusul'
-                          : 'Rp${price.toString()} / bulan',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          size: 16,
-                          color: scheme.primary,
-                        ),
-                        Text(
-                          property.ratingCount > 0
-                              ? '${property.ratingAvg?.toStringAsFixed(1)} (${property.ratingCount})'
-                              : 'Belum ada ulasan',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        if (property.distanceM != null) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            '${property.distanceM} m',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ],
-                    ),
-                    if (property.availability != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '${property.availability} kamar tersedia',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: scheme.primary),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -340,6 +296,234 @@ class _ErrorRetry extends StatelessWidget {
           FilledButton.tonal(
             onPressed: onRetry,
             child: const Text('Coba lagi'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OfflineBanner extends StatelessWidget {
+  const _OfflineBanner({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.wifi_off, size: 18, color: scheme.onErrorContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Offline — menampilkan hasil terakhir.',
+              style: TextStyle(color: scheme.onErrorContainer),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Muat ulang')),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sheet filter (A1) — hanya key allow-list cp03a §2; nilai kosong tidak
+/// dikirim (default server dipakai).
+class _FilterSheet extends StatefulWidget {
+  const _FilterSheet({required this.initial});
+
+  final Map<String, dynamic> initial;
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  late final TextEditingController _min;
+  late final TextEditingController _max;
+  late String _gender;
+  late Set<String> _roomTypes;
+  late num _ratingMin;
+  late bool _availableOnly;
+
+  @override
+  void initState() {
+    super.initState();
+    final i = widget.initial;
+    _min = TextEditingController(text: i['price_min']?.toString() ?? '');
+    _max = TextEditingController(text: i['price_max']?.toString() ?? '');
+    _gender = (i['gender'] as String?) ?? 'any';
+    _roomTypes = {...((i['room_types'] as List?) ?? const []).cast<String>()};
+    _ratingMin = (i['rating_min'] as num?) ?? 0;
+    _availableOnly = i['available_only'] != false;
+  }
+
+  @override
+  void dispose() {
+    _min.dispose();
+    _max.dispose();
+    super.dispose();
+  }
+
+  Map<String, dynamic> _build() {
+    final f = <String, dynamic>{};
+    final minV = int.tryParse(_min.text.trim());
+    final maxV = int.tryParse(_max.text.trim());
+    if (minV != null) f['price_min'] = minV;
+    if (maxV != null) f['price_max'] = maxV;
+    if (_gender != 'any') f['gender'] = _gender;
+    if (_roomTypes.isNotEmpty) f['room_types'] = _roomTypes.toList();
+    if (_ratingMin > 0) f['rating_min'] = _ratingMin;
+    f['available_only'] = _availableOnly;
+    return f;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 8,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 32,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text('Filter', style: text.titleMedium),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _min,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Harga min',
+                    prefixText: 'Rp ',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _max,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Harga max',
+                    prefixText: 'Rp ',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text('Penghuni', style: text.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Semua'),
+                selected: _gender == 'any',
+                onSelected: (_) => setState(() => _gender = 'any'),
+              ),
+              ChoiceChip(
+                label: const Text('Putra'),
+                selected: _gender == 'male_only',
+                onSelected: (_) => setState(() => _gender = 'male_only'),
+              ),
+              ChoiceChip(
+                label: const Text('Putri'),
+                selected: _gender == 'female_only',
+                onSelected: (_) => setState(() => _gender = 'female_only'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text('Tipe kamar', style: text.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final (value, label) in const [
+                ('single', 'Satuan'),
+                ('shared', 'Bersama'),
+                ('studio', 'Studio'),
+              ])
+                FilterChip(
+                  label: Text(label),
+                  selected: _roomTypes.contains(value),
+                  onSelected: (sel) => setState(() {
+                    if (sel) {
+                      _roomTypes.add(value);
+                    } else {
+                      _roomTypes.remove(value);
+                    }
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text('Rating minimal', style: text.titleSmall),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final (value, label) in const [
+                (0, 'Semua'),
+                (3, '3+'),
+                (4, '4+'),
+                (5, '5'),
+              ])
+                ChoiceChip(
+                  label: Text(label),
+                  selected: _ratingMin == value,
+                  onSelected: (_) => setState(() => _ratingMin = value),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Hanya yang tersedia'),
+            value: _availableOnly,
+            onChanged: (v) => setState(() => _availableOnly = v),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () =>
+                    Navigator.of(context).pop(const {'available_only': true}),
+                child: const Text('Reset'),
+              ),
+              const Spacer(),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(_build()),
+                child: const Text('Terapkan'),
+              ),
+            ],
           ),
         ],
       ),

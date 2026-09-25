@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:kostara/features/owner/add_property_screen.dart';
+import 'package:kostara/core/util/ewkb.dart';
 
 void main() {
   test('latLngToEwkbHex cocok dengan EWKB PostGIS (titik verifikasi dev)', () {

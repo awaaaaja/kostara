@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/util/ewkb.dart';
 import 'models.dart';
 
 /// Akses data discovery. Semua spatial query lewat RPC SECURITY INVOKER
@@ -39,6 +40,59 @@ class DiscoveryRepository {
     return SearchResult.fromJson(data as Map<String, dynamic>);
   }
 
+  /// Feed rekomendasi (cp03a §3): `{items:[{property_id, display_name, score,
+  /// rank, reason_codes}], model_name}`. server-side fallback — selalu isi
+  /// selama ada property listable; impression log server-side.
+  Future<Map<String, dynamic>> feed({int limit = 12}) async {
+    final data = await _db.rpc(
+      'feed_recommendations',
+      params: {'p_limit': limit},
+    );
+    return data as Map<String, dynamic>;
+  }
+
+  /// Hydrasi ringkasan feed (harga/ketersediaan/cover) dalam 1 query; RLS aktif.
+  Future<List<PropertySummary>> propertiesByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    final rows = await _db
+        .from('properties')
+        .select('''
+          id, name, gender_policy,
+          rooms(price, status),
+          property_images(storage_path, is_cover, sort_order)
+        ''')
+        .inFilter('id', ids);
+    return rows.map((r) {
+      final rooms = (r['rooms'] as List?) ?? const [];
+      final available = rooms.where((x) => x['status'] == 'available').toList();
+      final prices = available
+          .map((x) => (x['price'] as num?)?.toInt())
+          .whereType<int>()
+          .toList();
+      final images = ((r['property_images'] as List?) ?? const []).toList()
+        ..sort((a, b) {
+          final ai = (a['is_cover'] == true) ? 1 : 0;
+          final bi = (b['is_cover'] == true) ? 1 : 0;
+          if (ai != bi) return bi - ai;
+          return ((b['sort_order'] ?? 0) as num).compareTo(
+            (a['sort_order'] ?? 0) as num,
+          );
+        });
+      return PropertySummary(
+        id: r['id'] as String,
+        name: r['name'] as String,
+        priceFrom: prices.isEmpty
+            ? null
+            : prices.reduce((a, b) => a < b ? a : b),
+        availability: available.length,
+        genderPolicy: r['gender_policy'] as String?,
+        coverPath: images.isEmpty
+            ? null
+            : images.first['storage_path'] as String?,
+      );
+    }).toList();
+  }
+
   Future<List<Campus>> campusSuggestions(String query) async {
     final data = await _db.rpc(
       'campus_suggestions',
@@ -53,7 +107,7 @@ class DiscoveryRepository {
   Future<List<Campus>> allCampuses() async {
     final data = await _db
         .from('campuses')
-        .select('id, name, address')
+        .select('id, name, address, location')
         .eq('is_active', true)
         .order('name');
     return data
@@ -62,6 +116,8 @@ class DiscoveryRepository {
             'id': e['id'],
             'name': e['name'],
             'location_label': e['address'],
+            'lat': ewkbHexToLatLng(e['location'] as String?)?.latitude,
+            'lng': ewkbHexToLatLng(e['location'] as String?)?.longitude,
           }),
         )
         .toList();
