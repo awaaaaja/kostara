@@ -1,0 +1,84 @@
+{
+  "created_at": "20260926T000046Z",
+  "seed": 42,
+  "summary": {
+    "airroi_benchmark_usd": {
+      "B0_geo_median": {
+        "cv_mae_mean": 81.8072,
+        "cv_mae_std": 11.6744,
+        "cv_rmse_mean": 183.4067,
+        "cv_rmse_std": 35.8779,
+        "cv_r2_mean": -0.0983,
+        "fit_predict_ms_mean": 12.766
+      },
+      "B1_linear_regression": {
+        "cv_mae_mean": 62.6362,
+        "cv_mae_std": 5.5103,
+        "cv_rmse_mean": 132.0984,
+        "cv_rmse_std": 24.5331,
+        "cv_r2_mean": 0.4199,
+        "fit_predict_ms_mean": 486.063
+      }
+    },
+    "kostara_local_idr": {
+      "B0_geo_median": {
+        "cv_mae_mean": 224920.6349,
+        "cv_mae_std": 135265.2927,
+        "cv_rmse_mean": 267820.7397,
+        "cv_rmse_std": 177096.9261,
+        "cv_r2_mean": -0.8172,
+        "fit_predict_ms_mean": 3.164
+      },
+      "B1_linear_regression": {
+        "cv_mae_mean": 252155.3358,
+        "cv_mae_std": 175243.2969,
+        "cv_rmse_mean": 299743.3461,
+        "cv_rmse_std": 213461.2218,
+        "cv_r2_mean": -1.1976,
+        "fit_predict_ms_mean": 38.07
+      }
+    },
+    "meta": {
+      "airroi": {
+        "n_rows": 28761,
+        "target": "ttm_avg_rate (USD/malam)",
+        "group": "city",
+        "features": [
+          "room_type",
+          "latitude",
+          "longitude",
+          "guests",
+          "bedrooms",
+          "beds",
+          "baths",
+          "min_nights",
+          "cleaning_fee",
+          "extra_guest_fee",
+          "amenities_count",
+          "city",
+          "country"
+        ]
+      },
+      "kostara": {
+        "n_rows": 40,
+        "target": "monthly_price (IDR/bulan)",
+        "group": "property_id",
+        "features": [
+          "district",
+          "lat",
+          "lng",
+          "size_sqm",
+          "room_type",
+          "gender_policy",
+          "amenities_count",
+          "nearest_campus_km",
+          "deposit",
+          "ac",
+          "wifi",
+          "kamar-mandi-dalam",
+          "parkir-motor"
+        ]
+      }
+    }
+  }
+}

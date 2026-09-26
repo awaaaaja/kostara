@@ -264,3 +264,21 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
 - Risiko/keterbatasan: GroupKFold pada benchmark memakai group=kota
   (1 baris/listing → group property degeneratif) — dicatat sebagai
   deviasi terdokumentasi
+
+## 2026-09-26 — Phase D baseline harga (price_io.py + run_baselines.py)
+- Tujuan: memenuhi §27 Phase D / §10 — baseline geografis + linear dengan
+  split GroupKFold anti-leakage, sebelum kandidat non-linear
+- Bagian yang dibantu: menulis price_io.py (loader + assert kontrak
+  jumlah baris) dan run_baselines.py (B0/B1, CV, metrik, determinism),
+  perbaikan 2 bug (amenities_count sebelum cast; determinism membanding
+  timing ms), entri LOGBOOK
+- File/artefak terdampak: experiments/price/{price_io,run_baselines}.py
+  (baru), experiments/price/runs/20260926T000046Z/{baselines_metrics.json,
+  cv_results.csv} (baru), LOGBOOK.md, AI_USAGE_LOG.md
+- Cara verifikasi: run 2× metrik identik (DETERMINISM OK); angka MAE/RMSE/
+  R² terbaca dari json hasil; R² negatif lokal dilaporkan apa adanya
+- Perubahan manual setelah output AI: pemilihan group=city untuk benchmark
+  (deviasi §9, didokumentasi); pengecualian timing dari determinism check;
+  definisi fitur lokal (district/lat/lng/size_sqm/… + 4 fasilitas biner)
+- Risiko/keterbatasan: n=40 lokal → metrik baseline sangat varians tinggi
+  (folds kecil); R² negatif BUKAN bug, batas bawah jujur sebelum kandidat

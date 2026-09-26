@@ -243,3 +243,24 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
 - Bukti: validate_airroi QUALITY PASS · validate_dataset QUALITY PASS ·
   4 laporan di experiments/price/runs/
 - Lanjut: Phase D baseline (Geographic Median + Linear Regression)
+
+## 2026-09-26 — Price Intelligence: Phase D baseline (BASELINE PASS)
+- Status: **BASELINE PASS** — B0 Geographic Median + B1 Linear Regression,
+  CV GroupKFold(5), seed 42, determinism double-run OK (timing ms dikecualikan
+  dari perbandingan — wall clock memang nondeterministik)
+- `experiments/price/price_io.py` (loader tunggal; assert jumlah baris
+  = hasil gate QUALITY PASS → cleaning drift gagal keras) +
+  `run_baselines.py`
+- Hasil (nyata, tanpa poles):
+  - AirROI (USD/malam, n=29.057, group=city): B0 MAE 81,81±11,67 ·
+    RMSE 183,41±35,88 · R² −0,098 (unseen city → fallback global memang
+    lemah) | B1 MAE 62,64±5,51 · RMSE 132,10±24,54 · **R² 0,420** → LR
+    mengalahkan B0 sesuai ekspektasi
+  - KOSTARA lokal (IDR/bulan, n=40, group=property, 12 grup): B0
+    MAE 224.921±135.265 · R² −0,817 | B1 MAE 252.155±175.243 ·
+    R² −1,198 → **keduanya R² negatif** (n kecil, varian antar-kamar
+    besar); LR tak mengalahkan median district di data 40 baris
+- Deviasi terdokumentasi: benchmark memakai group=city (1 baris/listing
+  → group property degeneratif); KOSTARA tetap group=property_id
+- Bukti: `runs/20260926T000046Z/{baselines_metrics.json,cv_results.csv}`
+- Lanjut: Phase E kandidat (RF/XGB/CatBoost) + Phase F tuning
