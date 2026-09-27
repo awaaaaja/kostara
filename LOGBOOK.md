@@ -325,3 +325,20 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
     feature_schema.json,training_config.json}` (+ preprocessor bila XGB)
 - Bug diperbaiki saat build: prep tak ter-fit, frame penuh (UUID) masuk
   fit, latency dengan target nol (CB tolak).
+
+## 2026-09-28 — Price Intelligence: §17 conformal + §18 error analysis — PASS
+- **§17** — `runs/20260927T231103Z/interval_metrics.json`: split conformal
+  80% (alpha 0.2), kalibrasi group-aware n=9 (3 grup), q_hat 190.878 IDR,
+  lebar rata-rata 381.757 IDR. **Coverage empiris holdout = 60% (6/10) —
+  di bawah target 80%** → flag `coverage_below_target=true`, TIDAK boleh
+  klaim 80% tercapai (n kecil; jaminan finit-sample lemah). Status OK
+  (n_cal≥5) → interval tetap sah dipakai dengan laporan coverage asli.
+- **§18** — `runs/20260927T231103Z/{errors.csv,coverage_by_segment.csv,
+  error_analysis.md}`: MAE keseluruhan OOF+holdout 219.576 IDR (n=40);
+  14 segmen (district hanya Pauh 31 + Padang Timur 9 — jujur, bukan 11);
+  **pola: price band Q1 304.789 / Q4 344.136 vs Q2 127.045 / Q3 99.587
+  (ekstrem ~2-3× lebih buruk)** → aturan `low_confidence` untuk estimasi
+  di luar p25–p75 training (937.500–1.212.500 IDR) disimpan di
+  `artifacts/training_config.json` (untuk FastAPI §20);
+  travel_time_band: N/A (tanpa fitur routing V1).
+- Catatan jujur: semua angka = kondisi data dev n=40, bukan klaim produk.

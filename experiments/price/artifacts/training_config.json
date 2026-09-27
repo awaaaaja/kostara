@@ -24,5 +24,12 @@
     "catboost": "early_stop_0.5pct_over_10",
     "xgb": "early_stop_0.5pct_over_10"
   },
-  "dataset_version": "kostara-padang-v1-ed0ada2321be30cd"
+  "dataset_version": "kostara-padang-v1-ed0ada2321be30cd",
+  "low_confidence_price_band": {
+    "rule": "estimated price outside [p25, p75] of training target \u2192 quality_status=low_confidence",
+    "p25_idr": 937500.0,
+    "p75_idr": 1212500.0,
+    "p50_idr": 1050000.0,
+    "source": "training target distribution (n=40)"
+  }
 }

@@ -1,0 +1,15 @@
+segment_type,value,n,mae_idr,reliable,status
+district,Padang Timur,9,238438.93,True,OK
+district,Pauh,31,214099.38,True,OK
+price_band,Q1,10,304788.94,True,OK
+price_band,Q2,11,127045.14,True,OK
+price_band,Q3,9,99586.73,True,OK
+price_band,Q4,10,344136.45,True,OK
+room_size,11-16,18,205376.6,True,OK
+room_size,17-25,22,231193.29,True,OK
+facility_completeness,sedang,14,139122.5,True,OK
+facility_completeness,banyak,13,331415.66,True,OK
+facility_completeness,sangat,13,194377.89,True,OK
+gender_type,any,17,296493.7,True,OK
+gender_type,female_only,13,145331.08,True,OK
+gender_type,male_only,10,185333.42,True,OK

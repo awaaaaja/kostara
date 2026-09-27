@@ -1,0 +1,14 @@
+{
+  "method": "split_conformal",
+  "alpha": 0.2,
+  "target_coverage": 0.8,
+  "n_calibration": 9,
+  "q_hat_idr": 190878.41,
+  "holdout_n": 10,
+  "empirical_coverage": 0.6,
+  "holdout_inside": 6,
+  "mean_width_idr": 381756.83,
+  "calibration_group_count": 3,
+  "status": "OK",
+  "note": "coverage empiris diukur ASLI pada holdout n kecil \u2014 bukan klaim populasi"
+}
