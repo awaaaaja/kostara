@@ -1,0 +1,53 @@
+{
+  "created_at": "20260927T225853Z",
+  "label": "kostara_local_idr_log1p",
+  "source_candidates": "/home/ujang/Documents/Project/KOSTARA/experiments/price/runs/20260927T181652Z/candidates_metrics.json",
+  "seed": 42,
+  "trials_budget": 50,
+  "folds": 3,
+  "results": [
+    {
+      "family": "catboost",
+      "label": "kostara_local_idr_log1p",
+      "seed": 42,
+      "n_folds": 3,
+      "n_completed": 17,
+      "n_pruned": 61,
+      "best_value_mae": 260825.0237,
+      "best_params": {
+        "iterations": 248,
+        "depth": 7,
+        "learning_rate": 0.010204153607918516,
+        "l2_leaf_reg": 5.240662987109576
+      },
+      "best_iteration": 248,
+      "stop_reason": "early_stop_0.5pct_over_10",
+      "stable": true,
+      "wall_s": 58.7,
+      "selection_phrase": "MODEL SELECTION STABLE"
+    },
+    {
+      "family": "xgb",
+      "label": "kostara_local_idr_log1p",
+      "seed": 42,
+      "n_folds": 3,
+      "n_completed": 18,
+      "n_pruned": 14,
+      "best_value_mae": 265031.7795,
+      "best_params": {
+        "n_estimators": 145,
+        "max_depth": 10,
+        "learning_rate": 0.0969051816086107,
+        "subsample": 0.9913635222300002,
+        "colsample_bytree": 0.9665837824359954,
+        "min_child_weight": 6,
+        "reg_lambda": 0.13745320730243507
+      },
+      "best_iteration": 145,
+      "stop_reason": "early_stop_0.5pct_over_10",
+      "stable": true,
+      "wall_s": 8.1,
+      "selection_phrase": "MODEL SELECTION STABLE"
+    }
+  ]
+}
