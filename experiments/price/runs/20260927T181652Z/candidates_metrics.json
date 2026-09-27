@@ -1,0 +1,132 @@
+{
+  "created_at": "20260927T181652Z",
+  "seed": 42,
+  "summary": {
+    "airroi_benchmark_usd": {
+      "C1_random_forest": {
+        "cv_mae_mean": 48.6308,
+        "cv_mae_std": 5.2043,
+        "cv_rmse_mean": 109.9896,
+        "cv_rmse_std": 14.4273,
+        "cv_r2_mean": 0.5927,
+        "fit_predict_ms_mean": 154126.369
+      },
+      "C2_xgboost": {
+        "cv_mae_mean": 47.2501,
+        "cv_mae_std": 3.5908,
+        "cv_rmse_mean": 111.7032,
+        "cv_rmse_std": 18.9477,
+        "cv_r2_mean": 0.5867,
+        "fit_predict_ms_mean": 684.951
+      },
+      "C3_catboost": {
+        "cv_mae_mean": 65.7948,
+        "cv_mae_std": 14.6631,
+        "cv_rmse_mean": 120.3325,
+        "cv_rmse_std": 16.0905,
+        "cv_r2_mean": 0.4905,
+        "fit_predict_ms_mean": 6239.973
+      }
+    },
+    "airroi_benchmark_usd_log1p": {
+      "C1_random_forest": {
+        "cv_mae_mean": 44.7973,
+        "cv_mae_std": 4.5534,
+        "cv_rmse_mean": 107.029,
+        "cv_rmse_std": 15.4713,
+        "cv_r2_mean": 0.6164,
+        "fit_predict_ms_mean": 145207.779
+      },
+      "C2_xgboost": {
+        "cv_mae_mean": 44.4614,
+        "cv_mae_std": 5.0886,
+        "cv_rmse_mean": 109.6047,
+        "cv_rmse_std": 16.5595,
+        "cv_r2_mean": 0.5994,
+        "fit_predict_ms_mean": 680.206
+      },
+      "C3_catboost": {
+        "cv_mae_mean": 45.4935,
+        "cv_mae_std": 5.7431,
+        "cv_rmse_mean": 115.4345,
+        "cv_rmse_std": 22.0804,
+        "cv_r2_mean": 0.5629,
+        "fit_predict_ms_mean": 6195.859
+      }
+    },
+    "kostara_local_idr": {
+      "C1_random_forest": {
+        "cv_mae_mean": 300686.8056,
+        "cv_mae_std": 153573.7557,
+        "cv_rmse_mean": 353434.7587,
+        "cv_rmse_std": 194286.3216,
+        "cv_r2_mean": -2.1277,
+        "fit_predict_ms_mean": 372.72
+      },
+      "C2_xgboost": {
+        "cv_mae_mean": 281186.5056,
+        "cv_mae_std": 142893.1068,
+        "cv_rmse_mean": 318435.287,
+        "cv_rmse_std": 184191.8677,
+        "cv_r2_mean": -1.66,
+        "fit_predict_ms_mean": 101.649
+      },
+      "C3_catboost": {
+        "cv_mae_mean": 251699.7183,
+        "cv_mae_std": 143460.8504,
+        "cv_rmse_mean": 296003.8291,
+        "cv_rmse_std": 187421.9317,
+        "cv_r2_mean": -0.9767,
+        "fit_predict_ms_mean": 420.214
+      }
+    },
+    "kostara_local_idr_log1p": {
+      "C1_random_forest": {
+        "cv_mae_mean": 287630.5356,
+        "cv_mae_std": 171513.8009,
+        "cv_rmse_mean": 344867.5635,
+        "cv_rmse_std": 224142.2955,
+        "cv_r2_mean": -1.6476,
+        "fit_predict_ms_mean": 363.668
+      },
+      "C2_xgboost": {
+        "cv_mae_mean": 270148.317,
+        "cv_mae_std": 148194.9722,
+        "cv_rmse_mean": 329048.3075,
+        "cv_rmse_std": 221907.6743,
+        "cv_r2_mean": -1.6461,
+        "fit_predict_ms_mean": 68.245
+      },
+      "C3_catboost": {
+        "cv_mae_mean": 249830.6844,
+        "cv_mae_std": 153339.3007,
+        "cv_rmse_mean": 304731.3791,
+        "cv_rmse_std": 202380.9534,
+        "cv_r2_mean": -1.0746,
+        "fit_predict_ms_mean": 424.397
+      }
+    },
+    "meta": {
+      "airroi": {
+        "n_rows": 28761,
+        "target": "ttm_avg_rate (USD/malam)",
+        "group": "city",
+        "models": [
+          "C1",
+          "C2",
+          "C3"
+        ]
+      },
+      "kostara": {
+        "n_rows": 40,
+        "target": "monthly_price (IDR/bulan)",
+        "group": "property_id",
+        "models": [
+          "C1",
+          "C2",
+          "C3"
+        ]
+      }
+    }
+  }
+}

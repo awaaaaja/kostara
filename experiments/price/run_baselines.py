@@ -73,29 +73,47 @@ def lr_pipeline(num_cols: list[str], cat_cols: list[str]) -> Pipeline:
     ])
 
 
+# ModelFactory: fit(Xtr, ytr, gtr) -> Predictor(Xte, gte) -> ndarray
+def build_geo_median(X, y, g):
+    m = GeoMedian().fit(y, g)
+    return lambda Xte, gte: m.predict(gte)
+
+
+def build_linear(num: list[str], cat: list[str]):
+    def fit(X, y, g):
+        model = lr_pipeline(num, cat).fit(X, y)
+        return lambda Xte, gte: model.predict(Xte)
+    return fit
+
+
 def cv(df: pd.DataFrame, *, target: str, features: list[str], groups_col: str,
-       label: str, n_splits: int = 5) -> tuple[list[dict], dict]:
-    # numerik/kategorikal ditentukan dari dtype aktual (fitur berbeda per dataset)
+       label: str, models: dict | None = None, n_splits: int = 5,
+       train_transform=None, inverse_transform=None
+       ) -> tuple[list[dict], dict]:
+    """CV GroupKFold. models: {nama: ModelFactory}; default B0+B1.
+    train_transform/inverse_transform: uji target log1p (§9) — model dilatih
+    pada y transformasi, metrik dihitung di ruang asli setelah inverse."""
     num = [c for c in features if pd.api.types.is_numeric_dtype(df[c])]
     cat = [c for c in features if c not in num]
+    if models is None:
+        models = {"B0_geo_median": build_geo_median,
+                  "B1_linear_regression": build_linear(num, cat)}
     gkf = GroupKFold(n_splits=min(n_splits, df[groups_col].nunique()))
     y = df[target].to_numpy(float)
     X = df[features]
     groups = df[groups_col].to_numpy()
-    rows, preds_t, preds_p = [], [], []
+    rows: list[dict] = []
     for i, (tr, te) in enumerate(gkf.split(X, y, groups), 1):
         Xtr, Xte = X.iloc[tr], X.iloc[te]
         ytr, yte = y[tr], y[te]
-        t0 = time.perf_counter()
-        b0 = GeoMedian().fit(ytr, groups[tr])
-        p0 = b0.predict(groups[te])
-        t_b0 = (time.perf_counter() - t0) * 1000
-        t0 = time.perf_counter()
-        model = lr_pipeline(num, cat).fit(Xtr, ytr)
-        p1 = model.predict(Xte)
-        t_b1 = (time.perf_counter() - t0) * 1000
-        for name, p, infer_ms in (("B0_geo_median", p0, t_b0),
-                                  ("B1_linear_regression", p1, t_b1)):
+        for name, factory in models.items():
+            t0 = time.perf_counter()
+            y_fit = train_transform(ytr) if train_transform else ytr
+            predictor = factory(Xtr, y_fit, groups[tr])
+            p = predictor(Xte, groups[te])
+            if inverse_transform:
+                p = np.asarray(inverse_transform(p), dtype=float)
+            infer_ms = (time.perf_counter() - t0) * 1000
             rows.append({
                 "dataset": label, "model": name, "fold": i,
                 "n_train": len(tr), "n_test": len(te),
@@ -104,9 +122,8 @@ def cv(df: pd.DataFrame, *, target: str, features: list[str], groups_col: str,
                 "r2": float(r2_score(yte, p)) if len(set(yte)) > 1 else None,
                 "fit_predict_ms": round(infer_ms, 3),
             })
-        preds_t.append(yte); preds_p.append((p0, p1))
     summary: dict[str, dict] = {}
-    for name in ("B0_geo_median", "B1_linear_regression"):
+    for name in models:
         m = [r for r in rows if r["model"] == name]
         summary[name] = {
             "cv_mae_mean": round(float(np.mean([r["mae"] for r in m])), 4),

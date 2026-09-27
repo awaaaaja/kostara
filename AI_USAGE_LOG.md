@@ -282,3 +282,23 @@ Jangan masukkan data pribadi tenant, dokumen verifikasi, credentials, atau kode 
   definisi fitur lokal (district/lat/lng/size_sqm/… + 4 fasilitas biner)
 - Risiko/keterbatasan: n=40 lokal → metrik baseline sangat varians tinggi
   (folds kecil); R² negatif BUKAN bug, batas bawah jujur sebelum kandidat
+
+## 2026-09-26 (opencode/mimo-v2.6-flash-free)
+- Tujuan: Master prompt Phase 0–2 — mandatory reading, codebase audit, Context Acquisition Report.
+- Bagian dibantu: audit sweep CLI, penulisan CONTEXT_ACQUISITION_REPORT.md.
+- Artefak: CONTEXT_ACQUISITION_REPORT.md (baru). Tidak ada kode/migrasi diubah.
+- Verifikasi: semua temuan audit dari hasil grep/ls/read aktual repo.
+- Perubahan manual setelah output AI: fix typo nama file pada report.
+- Risiko/keterbatasan: laporan disusun dari state lokal; audit tidak menyentuh isi tiap file besar (mengandalkan map + verifikasi titik).
+
+## 2026-09-27 (opencode/mimo-v2.6-flash-free)
+- Tujuan: Phase E kandidat + diagnosa determinism + kerangka tuning §15.
+- Bagian dibantu: modifikasi cv()/run_candidates/near(), tune_candidates.py,
+  diagnosa per-model (skrip diagnostik lokal).
+- Artefak: runs/20260927T181652Z, experiments/price/{run_candidates,tune_candidates}.py,
+  run_baselines.py (cv transform).
+- Cara verifikasi: DETERMINISM OK internal + regresi Phase D identik de4defa
+  + smoke test tuning.
+- Perubahan manual: toleransi 1e-6 dipilih setelah maxdiff terukur 2.3e-13.
+- Risiko: toleransi 1e-6 menyembunyikan perbedaan metrik <1e-6 — aman karena
+  skala MAE puluhan–ratus ribu.

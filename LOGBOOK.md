@@ -264,3 +264,38 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   → group property degeneratif); KOSTARA tetap group=property_id
 - Bukti: `runs/20260926T000046Z/{baselines_metrics.json,cv_results.csv}`
 - Lanjut: Phase E kandidat (RF/XGB/CatBoost) + Phase F tuning
+
+## 2026-09-26 — Master execution Phase 0–2 (READ → AUDIT → REPORT)
+- PHASE 0: inventory dokumen wajib (AGENTS/PRD/DESIGN/SPRINTS/VALIDATION_PROTOCOL/PROMPTS/README/ML_PRICE_INTELLIGENCE/PROMPT_PRICE_ESTIMATOR) terverifikasi + dibaca.
+- PHASE 1: audit codebase penuh per §2 (pubspec, lib feature-first, router, repositories, AppGuard service_role, 19 migration, RLS matrix 32+65, PostGIS/RPC, storage, Edge Functions kosong, no FastAPI, CI, experiments, TODO sweep 0).
+- PHASE 2: `CONTEXT_ACQUISITION_REPORT.md` ditulis → **READY TO THINK**.
+- Verifikasi: optuna/shap/shap belum ada di .venv-ml (dicatat sebagai gap fase §15/§18).
+
+## 2026-09-26 — Master execution §7 THINK gate — ML architecture
+- Status: **PASS (coherent)** — `docs/capstone/ml-price/THINK-01-ml-architecture.md`
+  (21 field: unit=room_type×obs, target monthly_price + log1p, fitur listing-time
+  only, tanpa travel-time (tanpa routing engine → tanpa ETA palsu), split
+  GroupKFold/GSS, B0/B1 done → C1 RF/C2 XGB/C3 CatBoost, Optuna ≤50 top-2 stop
+  0,5%/10 trial, conformal 80% coverage real, arsitektur ADR-007 EF+FastAPI,
+  fallback B0→stale→graceful, n=40 lokal diakui jujur).
+- Keputusan: OSM extract & ORS dilewati V1 (haversine sudah ada); SHAP tidak
+  dipasang (pakai tree importance); ADR-007 wajib ditulis sebelum §20.
+
+## 2026-09-27 — Price Intelligence: Phase E kandidat (C1–C3) — gate PASS
+- Status: **PASS** — `runs/20260927T181652Z/{candidates_metrics.json,cv_results.csv}`
+- DETERMINISM OK (2 run identik dalam toleransi float 1e-6). Akar masalah run
+  sebelumnya: **false positive** — RF n_jobs>1 noise akumulasi float 2.3e-13
+  (diagnosa per-model: RF beda 2.3e-13, XGB/CB exact EQUAL raw+log1p);
+  fix: `near()` recursive tolerant compare + diff print saat gagal.
+- Hasil (CV 5-fold GroupKFold, seed 42, n=29.057 benchmark / 40 lokal):
+  - AirROI raw: RF 48.63 / **XGB 47.25** / CB 65.79 (B1 62.64)
+  - AirROI log1p: RF 44.80 / **XGB 44.46** / CB 45.49
+  - Lokal raw: RF 300.687 / XGB 281.187 / **CB 251.700** (B0 224.921 · B1 252.155)
+  - Lokal log1p: RF 287.631 / XGB 270.148 / **CB 249.831**
+- **Formulasi target: log1p menang** (3/3 model kedua dataset, §9).
+- Jujur: di lokal semua kandidat R² negatif & belum ada yang kalahkan B0
+  (n=40) — dinyatakan, tidak disembunyikan.
+- Refactor: `run_baselines.cv()` + `train_transform`/`inverse_transform`;
+  regression Phase D identik dengan `de4defa` ✓; `tune_candidates.py` §15
+  (smoke OK: 3 famili + log1p + stop-callback).
+- Wall 3148.9s · scan secret+emoji bersih.
