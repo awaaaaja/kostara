@@ -299,3 +299,29 @@ Log kronologis keputusan, sprint, dan bukti. Ringkas; detail di commit/gate repo
   regression Phase D identik dengan `de4defa` ✓; `tune_candidates.py` §15
   (smoke OK: 3 famili + log1p + stop-callback).
 - Wall 3148.9s · scan secret+emoji bersih.
+
+## 2026-09-28 — Price Intelligence: §15 tuning + §16 seleksi final — PASS ganda
+- **§15 TUNING PASS** — `runs/20260927T225853Z/tuning_kostara_local_idr_log1p.json`
+  (auto top-2 dari Phase E: CatBoost + XGB, formulasi log1p)
+  - CatBoost: MAE 260.825 (3-fold) · 17 completed/61 pruned · stop
+    `early_stop_0.5pct_over_10` → **MODEL SELECTION STABLE** · 58,7s
+    params: iterations=248, depth=7, lr=0.0102, l2_leaf_reg=5.24
+  - XGB: MAE 265.032 · 18 completed/14 pruned · stop sama → **STABLE** · 8,1s
+    params: n_estimators=145, max_depth=10, lr=0.097, subsample=0.991,
+    colsample=0.967, min_child_weight=6, reg_lambda=0.137 · best_iteration=145
+- **§16 SELEKSI FINAL PASS** — `runs/20260927T230632Z/{metrics.json,
+  cv_results.csv, holdout_predictions.csv, feature_importance.csv,
+  experiment_manifest.json}` (PRICE-EXP-001, dataset
+  kostara-padang-v1-ed0ada2321be30cd, git commit, seed 42)
+  - Split: GroupShuffleSplit 20% · train 30 (9 grup) / holdout 10 (3 grup)
+  - Kriteria (holdout MAE · CV±std · gap · p50/p95):
+    tuned_catboost **189.269** · 226.538±102.253 · gap 37.269 · 8.6/16.1ms
+    B0 245.000 · 201.042±124.611 · gap 43.958 · 0.004ms
+    B1 317.006 · 184.846±96.282 · gap 132.160 · 12.1/20.5ms
+    tuned_xgboost 466.161 · 271.033±113.618 · gap 195.128 · 12.6/21.5ms
+  - **SELECTED: tuned_catboost** (holdout menang + gap terkecil; holdout
+    n=10 kecil — dibaca bersama CV & benchmark AirROI, dicatat jujur)
+  - Artefak: `experiments/price/artifacts/{selected_model.joblib,
+    feature_schema.json,training_config.json}` (+ preprocessor bila XGB)
+- Bug diperbaiki saat build: prep tak ter-fit, frame penuh (UUID) masuk
+  fit, latency dengan target nol (CB tolak).

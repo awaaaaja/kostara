@@ -1,0 +1,32 @@
+{
+  "experiment_id": "PRICE-EXP-001",
+  "created_at": "20260927T230632Z",
+  "dataset_version": "kostara-padang-v1-ed0ada2321be30cd",
+  "git_commit": "8e032bc4ed7125ac8ee0af042df15b0b8634cd3f",
+  "seed": 42,
+  "hyperparameters": {
+    "catboost": {
+      "iterations": 248,
+      "depth": 7,
+      "learning_rate": 0.010204153607918516,
+      "l2_leaf_reg": 5.240662987109576
+    },
+    "xgb": {
+      "n_estimators": 145,
+      "max_depth": 10,
+      "learning_rate": 0.0969051816086107,
+      "subsample": 0.9913635222300002,
+      "colsample_bytree": 0.9665837824359954,
+      "min_child_weight": 6,
+      "reg_lambda": 0.13745320730243507
+    }
+  },
+  "metrics_file": "metrics.json",
+  "artifact_path": "experiments/price/artifacts/selected_model.joblib",
+  "preprocessor": null,
+  "holdout_group_ids": [
+    "a0000000-0000-4000-8000-000000000001",
+    "a0000000-0000-4000-8000-000000000010",
+    "a0000000-0000-4000-8000-000000000011"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "seed": 42,
+  "split": "GroupShuffleSplit test_size=0.2",
+  "formulation": "log1p",
+  "folds_cv": 5,
+  "best_params": {
+    "catboost": {
+      "iterations": 248,
+      "depth": 7,
+      "learning_rate": 0.010204153607918516,
+      "l2_leaf_reg": 5.240662987109576
+    },
+    "xgb": {
+      "n_estimators": 145,
+      "max_depth": 10,
+      "learning_rate": 0.0969051816086107,
+      "subsample": 0.9913635222300002,
+      "colsample_bytree": 0.9665837824359954,
+      "min_child_weight": 6,
+      "reg_lambda": 0.13745320730243507
+    }
+  },
+  "tuning_stop": {
+    "catboost": "early_stop_0.5pct_over_10",
+    "xgb": "early_stop_0.5pct_over_10"
+  },
+  "dataset_version": "kostara-padang-v1-ed0ada2321be30cd"
+}

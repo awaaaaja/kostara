@@ -1,0 +1,37 @@
+{
+  "features": [
+    "district",
+    "lat",
+    "lng",
+    "size_sqm",
+    "room_type",
+    "gender_policy",
+    "amenities_count",
+    "nearest_campus_km",
+    "deposit",
+    "ac",
+    "wifi",
+    "kamar-mandi-dalam",
+    "parkir-motor"
+  ],
+  "numeric": [
+    "lat",
+    "lng",
+    "size_sqm",
+    "amenities_count",
+    "nearest_campus_km",
+    "deposit",
+    "ac",
+    "wifi",
+    "kamar-mandi-dalam",
+    "parkir-motor"
+  ],
+  "categorical": [
+    "district",
+    "room_type",
+    "gender_policy"
+  ],
+  "target": "monthly_price",
+  "target_transform": "log1p",
+  "district": "properties.district (trigger, 11 kode 13.71.*)"
+}
